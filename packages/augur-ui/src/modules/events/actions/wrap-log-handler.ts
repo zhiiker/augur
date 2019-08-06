@@ -1,6 +1,8 @@
 import { ThunkDispatch, ThunkAction } from 'redux-thunk';
 import { Action } from 'redux';
 import { AppState } from 'store';
+import { augurSdk } from "services/augursdk";
+import { parseBytes32String } from "ethers/utils";
 
 export const wrapLogHandler = (logHandler: Function) => (
   log: any
@@ -11,7 +13,20 @@ export const wrapLogHandler = (logHandler: Function) => (
   if (log) {
     // console.info(`${new Date().toISOString()} LOG ${log.removed ? 'REMOVED' : 'ADDED'} ${log.eventName} ${JSON.stringify(log)}`)
     const universeId: string = getState().universe.id;
-    console.log("event name", Array.isArray(log) ? log.length : log.eventName);
+    if(log.eventName === "NewBlock") {
+      try {
+        const timeContract = augurSdk.get().contracts.getTime();
+        timeContract.getTypeName_().then((timeContractTypeName) => {
+          console.log(log.eventName, log.timestamp, parseBytes32String(timeContractTypeName));
+        }, (err) => {
+          console.log(log.eventName, log.timestamp, err.message);
+        });
+      } catch (e) {
+        console.log(log.eventName, log.timestamp, e.message);
+      }
+    } else {
+      console.log("event name", Array.isArray(log) ? log.length : log.eventName);
+    }
     const isInCurrentUniverse = true;
     // TODO: process universe when Events have universe propety, for now assume all events are good
     // const isInCurrentUniverse = Object.values(log).find(
