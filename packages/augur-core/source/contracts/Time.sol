@@ -1,6 +1,8 @@
 pragma solidity 0.5.4;
 
-import 'ROOT/ITime.sol';
+import "./ITime.sol";
+
+
 
 
 /**

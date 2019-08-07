@@ -1,8 +1,9 @@
 pragma solidity 0.5.4;
 
-import 'ROOT/trading/Orders.sol';
-import 'ROOT/libraries/ContractExists.sol';
-import 'ROOT/libraries/token/IERC20.sol';
+import "./libraries/token/IERC20.sol";
+import "./reporting/IMarket.sol";
+import "./libraries/ContractExists.sol";
+import "./trading/Orders.sol";
 
 
 contract TestOrders is Orders {

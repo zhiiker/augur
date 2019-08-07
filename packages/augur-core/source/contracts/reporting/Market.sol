@@ -1,23 +1,73 @@
 pragma solidity 0.5.4;
 
-import 'ROOT/reporting/IMarket.sol';
-import 'ROOT/libraries/Initializable.sol';
-import 'ROOT/libraries/Ownable.sol';
-import 'ROOT/libraries/collections/Map.sol';
-import 'ROOT/reporting/IUniverse.sol';
-import 'ROOT/reporting/IReportingParticipant.sol';
-import 'ROOT/reporting/IDisputeCrowdsourcer.sol';
-import 'ROOT/reporting/IV2ReputationToken.sol';
-import 'ROOT/factories/IDisputeCrowdsourcerFactory.sol';
-import 'ROOT/trading/ICash.sol';
-import 'ROOT/trading/IShareToken.sol';
-import 'ROOT/factories/ShareTokenFactory.sol';
-import 'ROOT/factories/InitialReporterFactory.sol';
-import 'ROOT/factories/MapFactory.sol';
-import 'ROOT/libraries/math/SafeMathUint256.sol';
-import 'ROOT/libraries/math/SafeMathInt256.sol';
-import 'ROOT/reporting/Reporting.sol';
-import 'ROOT/reporting/IInitialReporter.sol';
+import "./IReportingParticipant.sol";
+import "../trading/IShareToken.sol";
+import "../trading/IShareToken.sol";
+import "./IV2ReputationToken.sol";
+import "./IDisputeWindow.sol";
+import "./IUniverse.sol";
+import "./IReportingParticipant.sol";
+import "./IDisputeCrowdsourcer.sol";
+import "./IReportingParticipant.sol";
+import "./IInitialReporter.sol";
+import "./IMarket.sol";
+import "./IReportingParticipant.sol";
+import "./IV2ReputationToken.sol";
+import "./IInitialReporter.sol";
+import "./IMarket.sol";
+import "./IInitialReporter.sol";
+import "./IUniverse.sol";
+import "./IMarket.sol";
+import "../factories/IDisputeCrowdsourcerFactory.sol";
+import "./IDisputeCrowdsourcer.sol";
+import "./IDisputeCrowdsourcer.sol";
+import "./IV2ReputationToken.sol";
+import "./IReportingParticipant.sol";
+import "./IReportingParticipant.sol";
+import "./IUniverse.sol";
+import "./IDisputeCrowdsourcer.sol";
+import "./IDisputeCrowdsourcer.sol";
+import "./IDisputeCrowdsourcer.sol";
+import "./IV2ReputationToken.sol";
+import "./IInitialReporter.sol";
+import "./IInitialReporter.sol";
+import "../trading/IShareToken.sol";
+import "../factories/InitialReporterFactory.sol";
+import "./IUniverse.sol";
+import "../IAugur.sol";
+import "../trading/IShareToken.sol";
+import "../libraries/collections/IMap.sol";
+import "./IReportingParticipant.sol";
+import "./IDisputeCrowdsourcer.sol";
+import "../factories/MapFactory.sol";
+import "../IAugur.sol";
+import "../trading/ICash.sol";
+import "./IDisputeWindow.sol";
+import "./IUniverse.sol";
+import "../libraries/math/SafeMathInt256.sol";
+import "../libraries/math/SafeMathUint256.sol";
+import "./IMarket.sol";
+import "../libraries/Ownable.sol";
+import "../libraries/Initializable.sol";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /**

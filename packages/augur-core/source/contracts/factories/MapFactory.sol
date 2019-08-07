@@ -1,8 +1,13 @@
 pragma solidity 0.5.4;
 
-import 'ROOT/libraries/CloneFactory.sol';
-import 'ROOT/IAugur.sol';
-import 'ROOT/libraries/collections/IMap.sol';
+import "../libraries/collections/IMap.sol";
+import "../libraries/collections/IMap.sol";
+import "../IAugur.sol";
+import "../libraries/CloneFactory.sol";
+
+
+
+
 
 
 /**

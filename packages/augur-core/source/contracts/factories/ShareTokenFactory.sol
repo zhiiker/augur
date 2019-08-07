@@ -1,9 +1,15 @@
 pragma solidity 0.5.4;
 
+import "../trading/IShareToken.sol";
+import "../reporting/IMarket.sol";
+import "../trading/IShareToken.sol";
+import "../IAugur.sol";
+import "../libraries/CloneFactory.sol";
 
-import 'ROOT/libraries/CloneFactory.sol';
-import 'ROOT/reporting/IMarket.sol';
-import 'ROOT/IAugur.sol';
+
+
+
+
 
 
 /**

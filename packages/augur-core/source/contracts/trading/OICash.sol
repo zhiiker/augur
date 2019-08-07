@@ -1,9 +1,18 @@
 pragma solidity 0.5.4;
 
-import 'ROOT/IAugur.sol';
-import 'ROOT/libraries/Initializable.sol';
-import 'ROOT/libraries/token/VariableSupplyToken.sol';
-import 'ROOT/trading/IOICash.sol';
+import "../reporting/IUniverse.sol";
+import "../IAugur.sol";
+import "../reporting/IUniverse.sol";
+import "../libraries/token/IERC20.sol";
+import "../libraries/math/SafeMathUint256.sol";
+import "./IOICash.sol";
+import "../libraries/Initializable.sol";
+import "../libraries/token/VariableSupplyToken.sol";
+
+
+
+
+
 
 
 /**

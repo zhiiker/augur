@@ -1,17 +1,37 @@
 pragma solidity 0.5.4;
 
-
-import 'ROOT/trading/IFillOrder.sol';
-import 'ROOT/libraries/ReentrancyGuard.sol';
-import 'ROOT/libraries/math/SafeMathUint256.sol';
-import 'ROOT/reporting/IMarket.sol';
-import 'ROOT/trading/ICash.sol';
-import 'ROOT/trading/ICompleteSets.sol';
-import 'ROOT/trading/IOrders.sol';
-import 'ROOT/trading/IShareToken.sol';
-import 'ROOT/trading/IProfitLoss.sol';
-import 'ROOT/trading/Order.sol';
-import 'ROOT/libraries/Initializable.sol';
+import "../reporting/IMarket.sol";
+import "./IShareToken.sol";
+import "../reporting/IMarket.sol";
+import "../reporting/IMarket.sol";
+import "../IAugur.sol";
+import "./IProfitLoss.sol";
+import "./IOrders.sol";
+import "../IAugur.sol";
+import "../libraries/math/SafeMathUint256.sol";
+import "./IFillOrder.sol";
+import "../libraries/ReentrancyGuard.sol";
+import "../libraries/Initializable.sol";
+import "./IShareToken.sol";
+import "./IShareToken.sol";
+import "./IOrders.sol";
+import "../reporting/IMarket.sol";
+import "./IShareToken.sol";
+import "./IShareToken.sol";
+import "../reporting/IMarket.sol";
+import "../reporting/IMarket.sol";
+import "./IOrders.sol";
+import "../IAugur.sol";
+import "../IAugur.sol";
+import "../libraries/token/IERC20.sol";
+import "../IAugur.sol";
+import "./IShareToken.sol";
+import "./IShareToken.sol";
+import "./ICash.sol";
+import "./ICompleteSets.sol";
+import "../reporting/IMarket.sol";
+import "./IOrders.sol";
+import "../libraries/math/SafeMathUint256.sol";
 
 
 library Trade {

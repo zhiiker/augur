@@ -1,11 +1,18 @@
 pragma solidity 0.5.4;
 
-import 'ROOT/libraries/CloneFactory.sol';
-import 'ROOT/IAugur.sol';
-import 'ROOT/reporting/IUniverse.sol';
-import 'ROOT/reporting/IDisputeWindow.sol';
-import 'ROOT/factories/IDisputeWindowFactory.sol';
-import 'ROOT/reporting/Reporting.sol';
+import "../reporting/IDisputeWindow.sol";
+import "../reporting/IUniverse.sol";
+import "../reporting/IDisputeWindow.sol";
+import "../IAugur.sol";
+import "./IDisputeWindowFactory.sol";
+import "../libraries/CloneFactory.sol";
+
+
+
+
+
+
+
 
 
 /**

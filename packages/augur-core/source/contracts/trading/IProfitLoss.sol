@@ -1,8 +1,9 @@
 pragma solidity 0.5.4;
 
-
-import 'ROOT/IAugur.sol';
-import 'ROOT/reporting/IMarket.sol';
+import "../reporting/IMarket.sol";
+import "../reporting/IMarket.sol";
+import "../reporting/IMarket.sol";
+import "../IAugur.sol";
 
 
 contract IProfitLoss {

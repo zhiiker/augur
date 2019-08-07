@@ -1,13 +1,21 @@
 pragma solidity 0.5.4;
 
+import "../reporting/IReputationToken.sol";
+import "../reporting/IMarket.sol";
+import "../reporting/IUniverse.sol";
+import "../IAugur.sol";
+import "../libraries/math/SafeMathUint256.sol";
+import "./IMarketFactory.sol";
+import "../libraries/CloneFactory.sol";
 
-import 'ROOT/libraries/CloneFactory.sol';
-import 'ROOT/reporting/IMarket.sol';
-import 'ROOT/reporting/IReputationToken.sol';
-import 'ROOT/trading/ICash.sol';
-import 'ROOT/factories/IMarketFactory.sol';
-import 'ROOT/libraries/math/SafeMathUint256.sol';
-import 'ROOT/IAugur.sol';
+
+
+
+
+
+
+
+
 
 
 /**

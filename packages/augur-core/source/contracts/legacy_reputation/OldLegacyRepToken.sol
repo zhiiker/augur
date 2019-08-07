@@ -1,17 +1,31 @@
 pragma solidity 0.5.4;
 
-
-import 'ROOT/reporting/IReputationToken.sol';
-import 'ROOT/legacy_reputation/DelegationTarget.sol';
-import 'ROOT/libraries/ITyped.sol';
-import 'ROOT/libraries/Initializable.sol';
-import 'ROOT/libraries/token/VariableSupplyToken.sol';
-import 'ROOT/libraries/token/IERC20.sol';
-import 'ROOT/reporting/IUniverse.sol';
-import 'ROOT/reporting/IMarket.sol';
-import 'ROOT/reporting/Reporting.sol';
-import 'ROOT/reporting/IDisputeCrowdsourcer.sol';
-import 'ROOT/libraries/math/SafeMathUint256.sol';
+import "../libraries/token/IERC20.sol";
+import "../libraries/token/IERC20.sol";
+import "../libraries/token/IERC20.sol";
+import "../reporting/IUniverse.sol";
+import "../reporting/IUniverse.sol";
+import "../reporting/IReputationToken.sol";
+import "../libraries/token/IERC20.sol";
+import "../reporting/IUniverse.sol";
+import "../reporting/IUniverse.sol";
+import "../reporting/IUniverse.sol";
+import "../reporting/IReputationToken.sol";
+import "../reporting/IReportingParticipant.sol";
+import "../reporting/IUniverse.sol";
+import "../reporting/IUniverse.sol";
+import "../reporting/IReputationToken.sol";
+import "../reporting/IReputationToken.sol";
+import "../reporting/IUniverse.sol";
+import "../libraries/token/IERC20.sol";
+import "../reporting/IUniverse.sol";
+import "../reporting/IUniverse.sol";
+import "../libraries/math/SafeMathUint256.sol";
+import "../reporting/IReputationToken.sol";
+import "../libraries/token/VariableSupplyToken.sol";
+import "../libraries/Initializable.sol";
+import "../libraries/ITyped.sol";
+import "./DelegationTarget.sol";
 
 
 contract OldLegacyReputationToken is DelegationTarget, ITyped, Initializable, VariableSupplyToken, IReputationToken {

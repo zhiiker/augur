@@ -1,7 +1,7 @@
 pragma solidity 0.5.4;
 
-
-import 'ROOT/reporting/IMarket.sol';
+import "../reporting/IMarket.sol";
+import "../reporting/IMarket.sol";
 
 
 contract ICompleteSets {

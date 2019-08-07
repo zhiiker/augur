@@ -1,13 +1,24 @@
 pragma solidity 0.5.4;
 
-import 'ROOT/libraries/IERC1820Registry.sol';
-import 'ROOT/trading/IShareToken.sol';
-import 'ROOT/libraries/token/VariableSupplyToken.sol';
-import 'ROOT/libraries/ITyped.sol';
-import 'ROOT/libraries/Initializable.sol';
-import 'ROOT/reporting/IMarket.sol';
-import 'ROOT/trading/IProfitLoss.sol';
-import 'ROOT/IAugur.sol';
+import "../reporting/IMarket.sol";
+import "../reporting/IMarket.sol";
+import "../IAugur.sol";
+import "./IProfitLoss.sol";
+import "../IAugur.sol";
+import "../reporting/IMarket.sol";
+import "./IShareToken.sol";
+import "../libraries/token/VariableSupplyToken.sol";
+import "../libraries/Initializable.sol";
+import "../libraries/ITyped.sol";
+
+
+
+
+
+
+
+
+
 
 
 /**

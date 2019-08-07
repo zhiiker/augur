@@ -1,12 +1,20 @@
 pragma solidity 0.5.4;
 
-import 'ROOT/libraries/IERC1820Registry.sol';
-import 'ROOT/libraries/Initializable.sol';
-import 'ROOT/reporting/IInitialReporter.sol';
-import 'ROOT/reporting/IMarket.sol';
-import 'ROOT/reporting/BaseReportingParticipant.sol';
-import 'ROOT/libraries/Ownable.sol';
-import 'ROOT/IAugur.sol';
+import "./IReputationToken.sol";
+import "./IMarket.sol";
+import "../IAugur.sol";
+import "./IInitialReporter.sol";
+import "../libraries/Initializable.sol";
+import "./BaseReportingParticipant.sol";
+import "../libraries/Ownable.sol";
+
+
+
+
+
+
+
+
 
 
 /**
@@ -39,7 +47,7 @@ contract InitialReporter is Ownable, BaseReportingParticipant, Initializable, II
         uint256 _repBalance = reputationToken.balanceOf(address(this));
         require(reputationToken.transfer(owner, _repBalance));
         if (!_isDisavowed) {
-            augur.logInitialReporterRedeemed(market.getUniverse(), owner, address(market), size, _repBalance, payoutNumerators);
+            augur.logInitialReporterRedeemed(market.getUniverse(), owner, address(market), size, _repBalance,  payoutNumerators);
         }
         return true;
     }

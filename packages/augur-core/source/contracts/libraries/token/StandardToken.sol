@@ -1,7 +1,10 @@
 pragma solidity 0.5.4;
 
-import 'ROOT/libraries/token/IStandardToken.sol';
-import 'ROOT/libraries/token/ERC777.sol';
+import "./IStandardToken.sol";
+import "./ERC777.sol";
+
+
+
 
 
 /**

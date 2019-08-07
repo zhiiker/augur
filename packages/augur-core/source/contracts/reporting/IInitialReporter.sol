@@ -1,8 +1,8 @@
 pragma solidity 0.5.4;
 
-import 'ROOT/reporting/IReportingParticipant.sol';
-import 'ROOT/reporting/IMarket.sol';
-import 'ROOT/IAugur.sol';
+import "./IMarket.sol";
+import "../IAugur.sol";
+import "./IReportingParticipant.sol";
 
 
 contract IInitialReporter is IReportingParticipant {

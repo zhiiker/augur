@@ -1,8 +1,8 @@
 pragma solidity 0.5.4;
 
-import 'ROOT/IAugur.sol';
-import 'ROOT/reporting/IUniverse.sol';
-import 'ROOT/reporting/IMarket.sol';
+import "../reporting/IMarket.sol";
+import "../reporting/IUniverse.sol";
+import "../IAugur.sol";
 
 
 contract IMarketFactory {

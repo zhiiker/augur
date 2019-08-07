@@ -1,7 +1,7 @@
 pragma solidity 0.5.4;
 
-import 'ROOT/IAugur.sol';
-import 'ROOT/trading/IOICash.sol';
+import "../trading/IOICash.sol";
+import "../IAugur.sol";
 
 
 contract IOICashFactory {

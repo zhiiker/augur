@@ -1,7 +1,7 @@
 pragma solidity 0.5.4;
 
-import 'ROOT/libraries/IERC1820Registry.sol';
-import 'ROOT/legacy_reputation/OldLegacyRepToken.sol';
+import "./IAugur.sol";
+import "./legacy_reputation/OldLegacyRepToken.sol";
 
 
 contract LegacyReputationToken is OldLegacyReputationToken {

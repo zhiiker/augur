@@ -1,8 +1,13 @@
 pragma solidity 0.5.4;
 
-import 'ROOT/reporting/IDisputeWindow.sol';
-import 'ROOT/libraries/math/SafeMathUint256.sol';
-import 'ROOT/reporting/Reporting.sol';
+import "../reporting/IDisputeWindow.sol";
+import "../reporting/IDisputeWindow.sol";
+import "../reporting/IDisputeWindow.sol";
+import "../libraries/math/SafeMathUint256.sol";
+
+
+
+
 
 
 /**

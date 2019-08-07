@@ -1,13 +1,11 @@
 pragma solidity 0.5.4;
 
-
-import 'ROOT/libraries/ITyped.sol';
-import 'ROOT/reporting/IUniverse.sol';
-import 'ROOT/reporting/IMarket.sol';
-import 'ROOT/reporting/IReputationToken.sol';
-import 'ROOT/trading/ICash.sol';
-import 'ROOT/IAugur.sol';
-import 'ROOT/libraries/token/IERC20.sol';
+import "./IReputationToken.sol";
+import "./IUniverse.sol";
+import "./IUniverse.sol";
+import "../IAugur.sol";
+import "../libraries/token/IERC20.sol";
+import "../libraries/ITyped.sol";
 
 
 contract IDisputeWindow is ITyped, IERC20 {

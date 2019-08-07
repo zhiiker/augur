@@ -1,8 +1,8 @@
 pragma solidity 0.5.4;
 
-import 'ROOT/external/IDaiJoin.sol';
-import 'ROOT/external/IDaiVat.sol';
-import 'ROOT/trading/ICash.sol';
+import "./trading/ICash.sol";
+import "./external/IDaiVat.sol";
+import "./external/IDaiJoin.sol";
 
 
 contract TestNetDaiJoin is IDaiJoin {

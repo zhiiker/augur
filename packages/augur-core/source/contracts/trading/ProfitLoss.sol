@@ -1,10 +1,22 @@
 pragma solidity 0.5.4;
 
-import 'ROOT/IAugur.sol';
-import 'ROOT/trading/IOrders.sol';
-import 'ROOT/libraries/Initializable.sol';
-import 'ROOT/libraries/math/SafeMathUint256.sol';
-import 'ROOT/libraries/math/SafeMathInt256.sol';
+import "../reporting/IMarket.sol";
+import "../reporting/IMarket.sol";
+import "../reporting/IMarket.sol";
+import "./IShareToken.sol";
+import "../reporting/IMarket.sol";
+import "../IAugur.sol";
+import "./IOrders.sol";
+import "../IAugur.sol";
+import "../libraries/math/SafeMathInt256.sol";
+import "../libraries/math/SafeMathUint256.sol";
+import "../libraries/Initializable.sol";
+
+
+
+
+
+
 
 
 /**

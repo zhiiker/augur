@@ -1,16 +1,36 @@
 pragma solidity 0.5.4;
 
-import 'ROOT/libraries/IERC1820Registry.sol';
-import 'ROOT/reporting/IV2ReputationToken.sol';
-import 'ROOT/libraries/ITyped.sol';
-import 'ROOT/libraries/token/VariableSupplyToken.sol';
-import 'ROOT/libraries/token/IERC20.sol';
-import 'ROOT/reporting/IUniverse.sol';
-import 'ROOT/reporting/IMarket.sol';
-import 'ROOT/reporting/Reporting.sol';
-import 'ROOT/reporting/IDisputeWindow.sol';
-import 'ROOT/reporting/IDisputeCrowdsourcer.sol';
-import 'ROOT/libraries/math/SafeMathUint256.sol';
+import "../libraries/token/IERC20.sol";
+import "./IUniverse.sol";
+import "./IUniverse.sol";
+import "./IReputationToken.sol";
+import "./IReportingParticipant.sol";
+import "./IUniverse.sol";
+import "./IUniverse.sol";
+import "./IReputationToken.sol";
+import "./IUniverse.sol";
+import "./IUniverse.sol";
+import "./IUniverse.sol";
+import "../IAugur.sol";
+import "../IAugur.sol";
+import "../libraries/token/IERC20.sol";
+import "./IUniverse.sol";
+import "./IUniverse.sol";
+import "../libraries/math/SafeMathUint256.sol";
+import "./IV2ReputationToken.sol";
+import "../libraries/token/VariableSupplyToken.sol";
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /**

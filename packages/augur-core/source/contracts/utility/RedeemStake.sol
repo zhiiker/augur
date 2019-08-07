@@ -1,7 +1,10 @@
 pragma solidity 0.5.4;
 
-import 'ROOT/reporting/IDisputeWindow.sol';
-import 'ROOT/reporting/IReportingParticipant.sol';
+import "../reporting/IDisputeWindow.sol";
+import "../reporting/IReportingParticipant.sol";
+
+
+
 
 
 /**

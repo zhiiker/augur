@@ -4,9 +4,14 @@ import "ROOT/libraries/token/IERC777.sol";
 import "ROOT/libraries/token/IERC777Recipient.sol";
 import "ROOT/libraries/token/IERC777Sender.sol";
 import "ROOT/libraries/token/IERC20.sol";
-import 'ROOT/libraries/math/SafeMathUint256.sol';
-import 'ROOT/libraries/ContractExists.sol';
+
+
 import "ROOT/libraries/IERC1820Registry.sol";
+import "../IERC1820Registry.sol";
+import "../ContractExists.sol";
+import "../math/SafeMathUint256.sol";
+import "./IERC20.sol";
+import "./IERC777.sol";
 
 /**
  * @dev Implementation of the `IERC777` interface.

@@ -1,21 +1,110 @@
 pragma solidity 0.5.4;
 
-import 'ROOT/IAugur.sol';
-import 'ROOT/libraries/token/IERC20.sol';
-import 'ROOT/libraries/math/SafeMathUint256.sol';
-import 'ROOT/factories/IUniverseFactory.sol';
-import 'ROOT/reporting/IUniverse.sol';
-import 'ROOT/reporting/IMarket.sol';
-import 'ROOT/reporting/IDisputeWindow.sol';
-import 'ROOT/reporting/IReputationToken.sol';
-import 'ROOT/reporting/IReportingParticipant.sol';
-import 'ROOT/reporting/IDisputeCrowdsourcer.sol';
-import 'ROOT/trading/IShareToken.sol';
-import 'ROOT/trading/IOrders.sol';
-import 'ROOT/trading/Order.sol';
-import 'ROOT/reporting/Reporting.sol';
-import 'ROOT/libraries/ContractExists.sol';
-import 'ROOT/ITime.sol';
+import "./reporting/IMarket.sol";
+import "./reporting/IUniverse.sol";
+import "./trading/IOrders.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IMarket.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IMarket.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IDisputeWindow.sol";
+import "./reporting/IDisputeCrowdsourcer.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IDisputeCrowdsourcer.sol";
+import "./reporting/IUniverse.sol";
+import "./trading/IShareToken.sol";
+import "./reporting/IUniverse.sol";
+import "./trading/IShareToken.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IUniverse.sol";
+import "./trading/IShareToken.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IDisputeCrowdsourcer.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IMarket.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IMarket.sol";
+import "./reporting/IMarket.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IMarket.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IMarket.sol";
+import "./reporting/IUniverse.sol";
+import "./trading/IOrders.sol";
+import "./reporting/IUniverse.sol";
+import "./trading/IOrders.sol";
+import "./reporting/IUniverse.sol";
+import "./trading/IOrders.sol";
+import "./reporting/IMarket.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IMarket.sol";
+import "./reporting/IMarket.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IMarket.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IMarket.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IDisputeCrowdsourcer.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IMarket.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IMarket.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IMarket.sol";
+import "./reporting/IMarket.sol";
+import "./libraries/token/IERC20.sol";
+import "./trading/IShareToken.sol";
+import "./reporting/IMarket.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IDisputeCrowdsourcer.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IUniverse.sol";
+import "./factories/IUniverseFactory.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IUniverse.sol";
+import "./reporting/IUniverse.sol";
+import "./ITime.sol";
+import "./reporting/IMarket.sol";
+import "./reporting/IMarket.sol";
+import "./reporting/IMarket.sol";
+import "./reporting/IUniverse.sol";
+import "./libraries/ContractExists.sol";
+import "./libraries/math/SafeMathUint256.sol";
+import "./IAugur.sol";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // Centralized approval authority and event emissions

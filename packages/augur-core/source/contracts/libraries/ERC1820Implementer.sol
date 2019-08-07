@@ -1,6 +1,6 @@
 pragma solidity 0.5.4;
 
-import 'ROOT/libraries/IERC1820Implementer.sol';
+import "./IERC1820Implementer.sol";
 
 
 contract ERC1820Implementer is IERC1820Implementer {

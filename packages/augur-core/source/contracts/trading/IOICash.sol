@@ -1,7 +1,8 @@
 pragma solidity 0.5.4;
 
-import 'ROOT/reporting/IUniverse.sol';
-import 'ROOT/libraries/token/IERC20.sol';
+import "../reporting/IUniverse.sol";
+import "../IAugur.sol";
+import "../libraries/token/IERC20.sol";
 
 
 contract IOICash is IERC20 {

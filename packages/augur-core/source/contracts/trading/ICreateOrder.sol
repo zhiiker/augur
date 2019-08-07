@@ -1,9 +1,10 @@
 pragma solidity 0.5.4;
 
-
-import 'ROOT/trading/Order.sol';
-import 'ROOT/reporting/IMarket.sol';
-import 'ROOT/libraries/token/IERC20.sol';
+import "../libraries/token/IERC20.sol";
+import "../reporting/IMarket.sol";
+import "../libraries/token/IERC20.sol";
+import "../reporting/IMarket.sol";
+import "./Order.sol";
 
 
 contract ICreateOrder {
