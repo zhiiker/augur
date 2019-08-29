@@ -5,13 +5,13 @@ import { makeProvider, MockGnosisRelayAPI } from '../../libs';
 let john: ContractAPI;
 let mockGnosisRelay: MockGnosisRelayAPI;
 
-beforeAll(async () => {
+test('GnosisSafe :: Create and Use Gnosis Safe for Transactions', async () => {
   const seed = await loadSeedFile(defaultSeedPath);
   const provider = await makeProvider(seed, ACCOUNTS);
 
   mockGnosisRelay = new MockGnosisRelayAPI();
   john = await ContractAPI.userWrapper(ACCOUNTS[0], provider, seed.addresses, undefined, mockGnosisRelay);
-}, 120000);
+});
 
 test.skip('GnosisSafe :: Create and Use Gnosis Safe for Transactions', async () => {
 

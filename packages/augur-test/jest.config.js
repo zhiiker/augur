@@ -1,4 +1,5 @@
 module.exports = {
+  "testRunner": 'jest-circus/runner',
   "roots": [
     "<rootDir>/src/tests/api",
     "<rootDir>/src/tests/connector",
