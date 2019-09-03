@@ -15,8 +15,6 @@ import { ORDER_TYPES } from '@augurproject/sdk';
 import { ContractInterfaces } from '@augurproject/core';
 import { SECONDS_IN_A_DAY } from '@augurproject/sdk';
 
-const mock = makeDbMock();
-
 const outcome0 = new BigNumber(0);
 const outcome1 = new BigNumber(1);
 describe('State API :: Markets :: ', () => {
@@ -25,73 +23,95 @@ describe('State API :: Markets :: ', () => {
   let john: ContractAPI;
   let mary: ContractAPI;
 
+  let mock;
+
   let universe;
+
   let categoricalMarket;
+  let categoricalMarketAddress;
   let categoricalMarket1;
+  let categoricalMarket1Address;
   let categoricalMarket2;
+  let categoricalMarket2Address;
   let scalarMarket;
+  let scalarMarketAddress;
   let scalarMarket1;
+  let scalarMarket1Address;
   let scalarMarket2;
+  let scalarMarket2Address;
   let yesNoMarket;
+  let yesNoMarketAddress;
   let yesNoMarket1;
+  let yesNoMarket1Address;
   let yesNoMarket2;
+  let yesNoMarket2Address;
   let endTime;
 
-  beforeEach(async () => {
-    const seed = await loadSeedFile(defaultSeedPath);
-    const provider = await makeProvider(seed, ACCOUNTS);
+  let baseProvider;
+  let baseSeed;
 
-    john = await ContractAPI.userWrapper(ACCOUNTS[0], provider, seed.addresses);
-    mary = await ContractAPI.userWrapper(ACCOUNTS[1], provider, seed.addresses);
-    db = mock.makeDB(john.augur, ACCOUNTS);
-    api = new API(john.augur, db);
+  beforeAll(async () => {
+    const mock = makeDbMock();
+    const seed = await loadSeedFile(defaultSeedPath);
+    baseProvider = await makeProvider(seed, ACCOUNTS);
+
+    const john = await ContractAPI.userWrapper(ACCOUNTS[0], baseProvider, seed.addresses);
+    const mary = await ContractAPI.userWrapper(ACCOUNTS[1], baseProvider, seed.addresses);
+    const db = mock.makeDB(john.augur, ACCOUNTS);
+    const api = new API(john.augur, db);
     await john.approveCentralAuthority();
     await mary.approveCentralAuthority();
 
-    universe = john.augur.contracts.universe;
-     endTime = (await john.getTimestamp()).plus(SECONDS_IN_A_DAY);
+    endTime = (await john.getTimestamp()).plus(SECONDS_IN_A_DAY);
+
     const lowFeePerCashInAttoCash = new BigNumber(10).pow(18).div(20); // 5% creator fee
     const highFeePerCashInAttoCash = new BigNumber(10).pow(18).div(10); // 10% creator fee
     const affiliateFeeDivisor = new BigNumber(0);
     const designatedReporter = john.account.publicKey;
-    yesNoMarket = await john.createReasonableYesNoMarket();
-    yesNoMarket1 = await john.createYesNoMarket({
+    yesNoMarketAddress = (await john.createReasonableYesNoMarket()).address;
+    yesNoMarket1Address = (await john.createYesNoMarket({
       endTime,
       feePerCashInAttoCash: lowFeePerCashInAttoCash,
       affiliateFeeDivisor,
       designatedReporter,
       extraInfo: '{"categories": ["yesNo 1 primary", "yesNo 1 secondary", "yesNo 1 tertiary"], "description": "yesNo description 1", "longDescription": "yesNo longDescription 1", "resolutionSource": "http://www.blah.com", "backupSource": "http://www.blah2.com"}',
-    });
-    yesNoMarket2 = await john.createYesNoMarket({
+    })).address;
+    yesNoMarket2Address = (await john.createYesNoMarket({
       endTime,
       feePerCashInAttoCash: lowFeePerCashInAttoCash,
       affiliateFeeDivisor,
       designatedReporter,
       extraInfo: '{"categories": ["yesNo 2 primary", "yesNo 2 secondary", "yesNo 2 tertiary"], "description": "yesNo description 2", "longDescription": "yesNo longDescription 2"}',
-    });
+    })).address;
 
-    categoricalMarket = await john.createReasonableMarket(
+    categoricalMarketAddress = (await john.createReasonableMarket(
       [stringTo32ByteHex('A'), stringTo32ByteHex('B'), stringTo32ByteHex('C')]
-    );
-    categoricalMarket1 = await john.createCategoricalMarket({
+    ));
+    categoricalMarket1Address = (await john.createCategoricalMarket({
       endTime,
       feePerCashInAttoCash: lowFeePerCashInAttoCash,
       affiliateFeeDivisor,
       designatedReporter,
-      outcomes: [stringTo32ByteHex('A'), stringTo32ByteHex('B'), stringTo32ByteHex('C')],
+      outcomes: [
+        stringTo32ByteHex('A'),
+        stringTo32ByteHex('B'),
+        stringTo32ByteHex('C')],
       extraInfo: '{"categories": ["categorical 1 primary", "categorical 1 secondary", "categorical 1 tertiary"], "description": "categorical description 1", "longDescription": "categorical longDescription 1"}',
-    });
-    categoricalMarket2 = await john.createCategoricalMarket({
+    })).address;
+    categoricalMarket2Address = (await john.createCategoricalMarket({
       endTime,
       feePerCashInAttoCash: highFeePerCashInAttoCash,
       affiliateFeeDivisor,
       designatedReporter,
-      outcomes: [stringTo32ByteHex('A'), stringTo32ByteHex('B'), stringTo32ByteHex('C')],
+      outcomes: [
+        stringTo32ByteHex('A'),
+        stringTo32ByteHex('B'),
+        stringTo32ByteHex('C')],
       extraInfo: '{"categories": ["categorical 2 primary", "categorical 2 secondary", "categorical 2 tertiary"], "description": "categorical description 2", "longDescription": "categorical longDescription 2"}',
-    });
+    })).address;
 
-    scalarMarket = await john.createReasonableScalarMarket();
-    scalarMarket1 = await john.createScalarMarket({
+    scalarMarketAddress = (await john.createReasonableScalarMarket()).address;
+    scalarMarket1Address = (await john.createScalarMarket({
       endTime,
       feePerCashInAttoCash: highFeePerCashInAttoCash,
       affiliateFeeDivisor,
@@ -99,9 +119,9 @@ describe('State API :: Markets :: ', () => {
       prices: [new BigNumber(0), new BigNumber(100)],
       numTicks: new BigNumber(100),
       extraInfo: '{"categories": ["scalar 1 primary", "scalar 1 secondary", "scalar 1 tertiary"], "description": "scalar description 1", "longDescription": "scalar longDescription 1", "_scalarDenomination": "scalar denom 1"}',
-    });
+    })).address;
     endTime = endTime.plus(1);
-     scalarMarket2 = await john.createScalarMarket({
+    scalarMarket2Address = (await john.createScalarMarket({
       endTime,
       feePerCashInAttoCash: highFeePerCashInAttoCash,
       affiliateFeeDivisor,
@@ -109,8 +129,33 @@ describe('State API :: Markets :: ', () => {
       prices: [new BigNumber(0), new BigNumber(100)],
       numTicks: new BigNumber(100),
       extraInfo: '{"categories": ["scalar 2 primary", "scalar 2 secondary", "scalar 2 tertiary"], "description": "scalar description 2", "longDescription": "scalar longDescription 2", "_scalarDenomination": "scalar denom 2"}',
-    });
+    })).address;
     endTime = endTime.minus(1);
+
+    baseSeed = await baseProvider.getSeed();
+  });
+
+  beforeEach(async () => {
+    mock = makeDbMock();
+    const provider = await makeProvider(baseSeed, ACCOUNTS);
+
+    john = await ContractAPI.userWrapper(ACCOUNTS[0], provider, provider.getContractAddresses());
+    mary = await ContractAPI.userWrapper(ACCOUNTS[1], provider, provider.getContractAddresses());
+    db = mock.makeDB(john.augur, ACCOUNTS);
+    api = new API(john.augur, db);
+
+    categoricalMarket = john.augur.contracts.marketFromAddress(categoricalMarketAddress);
+    categoricalMarket1 = john.augur.contracts.marketFromAddress(categoricalMarket1Address);
+    categoricalMarket2 = john.augur.contracts.marketFromAddress(categoricalMarket2Address);
+    scalarMarket = john.augur.contracts.marketFromAddress(scalarMarketAddress);
+    scalarMarket1 = john.augur.contracts.marketFromAddress(scalarMarket1Address);
+    scalarMarket2 = john.augur.contracts.marketFromAddress(scalarMarket2Address);
+    yesNoMarket = john.augur.contracts.marketFromAddress(yesNoMarket);
+    yesNoMarket1 = john.augur.contracts.marketFromAddress(yesNoMarket1Address);
+    yesNoMarket2 = john.augur.contracts.marketFromAddress(yesNoMarket2Address);
+
+    universe = john.augur.contracts.universe;
+    endTime = (await john.getTimestamp()).plus(SECONDS_IN_A_DAY);
 
     const actualDB = await db;
     await actualDB.sync(john.augur, mock.constants.chunkSize, 0);
@@ -118,7 +163,6 @@ describe('State API :: Markets :: ', () => {
 
   // NOTE: Full-text searching is also tested in MarketDerivedDB.test.ts
   test(':getMarkets', async () => {
-
     let marketList: MarketList;
 
     // Test invalid universe address
