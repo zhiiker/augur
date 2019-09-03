@@ -25,7 +25,19 @@ describe('State API :: Markets :: ', () => {
   let john: ContractAPI;
   let mary: ContractAPI;
 
-  beforeAll(async () => {
+  let universe;
+  let categoricalMarket;
+  let categoricalMarket1;
+  let categoricalMarket2;
+  let scalarMarket;
+  let scalarMarket1;
+  let scalarMarket2;
+  let yesNoMarket;
+  let yesNoMarket1;
+  let yesNoMarket2;
+  let endTime;
+
+  beforeEach(async () => {
     const seed = await loadSeedFile(defaultSeedPath);
     const provider = await makeProvider(seed, ACCOUNTS);
 
@@ -35,31 +47,33 @@ describe('State API :: Markets :: ', () => {
     api = new API(john.augur, db);
     await john.approveCentralAuthority();
     await mary.approveCentralAuthority();
-  }, 120000);
 
-  // NOTE: Full-text searching is also tested in MarketDerivedDB.test.ts
-  test(':getMarkets', async () => {
-    const universe = john.augur.contracts.universe;
-    let endTime = (await john.getTimestamp()).plus(SECONDS_IN_A_DAY);
+    universe = john.augur.contracts.universe;
+     endTime = (await john.getTimestamp()).plus(SECONDS_IN_A_DAY);
     const lowFeePerCashInAttoCash = new BigNumber(10).pow(18).div(20); // 5% creator fee
     const highFeePerCashInAttoCash = new BigNumber(10).pow(18).div(10); // 10% creator fee
     const affiliateFeeDivisor = new BigNumber(0);
     const designatedReporter = john.account.publicKey;
-    const yesNoMarket1 = await john.createYesNoMarket({
+    yesNoMarket = await john.createReasonableYesNoMarket();
+    yesNoMarket1 = await john.createYesNoMarket({
       endTime,
       feePerCashInAttoCash: lowFeePerCashInAttoCash,
       affiliateFeeDivisor,
       designatedReporter,
       extraInfo: '{"categories": ["yesNo 1 primary", "yesNo 1 secondary", "yesNo 1 tertiary"], "description": "yesNo description 1", "longDescription": "yesNo longDescription 1", "resolutionSource": "http://www.blah.com", "backupSource": "http://www.blah2.com"}',
     });
-    const yesNoMarket2 = await john.createYesNoMarket({
+    yesNoMarket2 = await john.createYesNoMarket({
       endTime,
       feePerCashInAttoCash: lowFeePerCashInAttoCash,
       affiliateFeeDivisor,
       designatedReporter,
       extraInfo: '{"categories": ["yesNo 2 primary", "yesNo 2 secondary", "yesNo 2 tertiary"], "description": "yesNo description 2", "longDescription": "yesNo longDescription 2"}',
     });
-    const categoricalMarket1 = await john.createCategoricalMarket({
+
+    categoricalMarket = await john.createReasonableMarket(
+      [stringTo32ByteHex('A'), stringTo32ByteHex('B'), stringTo32ByteHex('C')]
+    );
+    categoricalMarket1 = await john.createCategoricalMarket({
       endTime,
       feePerCashInAttoCash: lowFeePerCashInAttoCash,
       affiliateFeeDivisor,
@@ -67,7 +81,7 @@ describe('State API :: Markets :: ', () => {
       outcomes: [stringTo32ByteHex('A'), stringTo32ByteHex('B'), stringTo32ByteHex('C')],
       extraInfo: '{"categories": ["categorical 1 primary", "categorical 1 secondary", "categorical 1 tertiary"], "description": "categorical description 1", "longDescription": "categorical longDescription 1"}',
     });
-    const categoricalMarket2 = await john.createCategoricalMarket({
+    categoricalMarket2 = await john.createCategoricalMarket({
       endTime,
       feePerCashInAttoCash: highFeePerCashInAttoCash,
       affiliateFeeDivisor,
@@ -75,7 +89,9 @@ describe('State API :: Markets :: ', () => {
       outcomes: [stringTo32ByteHex('A'), stringTo32ByteHex('B'), stringTo32ByteHex('C')],
       extraInfo: '{"categories": ["categorical 2 primary", "categorical 2 secondary", "categorical 2 tertiary"], "description": "categorical description 2", "longDescription": "categorical longDescription 2"}',
     });
-    const scalarMarket1 = await john.createScalarMarket({
+
+    scalarMarket = await john.createReasonableScalarMarket();
+    scalarMarket1 = await john.createScalarMarket({
       endTime,
       feePerCashInAttoCash: highFeePerCashInAttoCash,
       affiliateFeeDivisor,
@@ -85,7 +101,7 @@ describe('State API :: Markets :: ', () => {
       extraInfo: '{"categories": ["scalar 1 primary", "scalar 1 secondary", "scalar 1 tertiary"], "description": "scalar description 1", "longDescription": "scalar longDescription 1", "_scalarDenomination": "scalar denom 1"}',
     });
     endTime = endTime.plus(1);
-    const scalarMarket2 = await john.createScalarMarket({
+     scalarMarket2 = await john.createScalarMarket({
       endTime,
       feePerCashInAttoCash: highFeePerCashInAttoCash,
       affiliateFeeDivisor,
@@ -552,13 +568,7 @@ describe('State API :: Markets :: ', () => {
   });
 
   test(':getMarketPriceHistory', async () => {
-    const yesNoMarket = await john.createReasonableYesNoMarket();
-    const categoricalMarket = await john.createReasonableMarket(
-      [stringTo32ByteHex('A'), stringTo32ByteHex('B'), stringTo32ByteHex('C')]
-    );
-
     // Place orders
-
     const numShares = new BigNumber(10000000000000);
     const price = new BigNumber(22);
     await john.placeOrder(
@@ -766,8 +776,6 @@ describe('State API :: Markets :: ', () => {
   });
 
   test(':getMarketPriceCandlesticks', async () => {
-    const yesNoMarket = await john.createReasonableYesNoMarket();
-
     const startTime = (await john.getTimestamp()).toNumber();
 
     // Place orders
@@ -1187,14 +1195,8 @@ describe('State API :: Markets :: ', () => {
     const numShares = new BigNumber(10000000000000);
     const price = new BigNumber(22);
 
-    let yesNoMarket: ContractInterfaces.Market;
-
-    beforeAll(async () => {
-      yesNoMarket = await john.createReasonableYesNoMarket();
-
+    beforeEach(async () => {
       // Place Dummy orders to be filtered out.
-      const scalarMarket = await john.createReasonableScalarMarket();
-
       await john.placeOrder(
         scalarMarket.address,
         ORDER_TYPES.BID,
@@ -1450,7 +1452,6 @@ describe('State API :: Markets :: ', () => {
   // TODO figure out why this breaks when mary actually starts disputing
   //      (before, is was john disputing every time)
   test.skip(':getMarketsInfo', async () => {
-    const yesNoMarket = await john.createReasonableYesNoMarket();
     const categoricalMarket = await john.createReasonableMarket(
       [stringTo32ByteHex('A'), stringTo32ByteHex('B'), stringTo32ByteHex('C')]
     );
@@ -2000,29 +2001,29 @@ describe('State API :: Markets :: ', () => {
       universe: john.augur.contracts.universe.address,
     });
     expect(categories).toMatchObject([
+      'flash',
+      'Reasonable',
+      'YesNo',
       'yesNo 1 primary',
       'yesNo 1 secondary',
       'yesNo 1 tertiary',
       'yesNo 2 primary',
       'yesNo 2 secondary',
       'yesNo 2 tertiary',
+      'Categorical',
       'categorical 1 primary',
       'categorical 1 secondary',
       'categorical 1 tertiary',
       'categorical 2 primary',
       'categorical 2 secondary',
       'categorical 2 tertiary',
+      'Scalar',
       'scalar 1 primary',
       'scalar 1 secondary',
       'scalar 1 tertiary',
       'scalar 2 primary',
       'scalar 2 secondary',
       'scalar 2 tertiary',
-      'flash',
-      'Reasonable',
-      'YesNo',
-      'Categorical',
-      'Scalar',
     ]);
-  }, 120000);
+  });
 });
