@@ -98,6 +98,10 @@ describe('State API :: Markets :: ', () => {
 
     const actualDB = await db;
     await actualDB.sync(john.augur, mock.constants.chunkSize, 0);
+  });
+
+  // NOTE: Full-text searching is also tested in MarketDerivedDB.test.ts
+  test(':getMarkets', async () => {
 
     let marketList: MarketList;
 
@@ -545,7 +549,7 @@ describe('State API :: Markets :: ', () => {
     expect(marketList.markets[5].id).toEqual(scalarMarket2.address);
 
     // TODO: Add tests for lastLiquidityDepleted sorts
-  }, 120000);
+  });
 
   test(':getMarketPriceHistory', async () => {
     const yesNoMarket = await john.createReasonableYesNoMarket();
@@ -759,7 +763,7 @@ describe('State API :: Markets :: ', () => {
         }
       }
     }
-  }, 120000);
+  });
 
   test(':getMarketPriceCandlesticks', async () => {
     const yesNoMarket = await john.createReasonableYesNoMarket();
@@ -1177,7 +1181,7 @@ describe('State API :: Markets :: ', () => {
         ).toBeInstanceOf(Number);
       }
     }
-  }, 120000);
+  });
 
   describe(':getMarketOrderBook', () => {
     const numShares = new BigNumber(10000000000000);
@@ -1268,7 +1272,7 @@ describe('State API :: Markets :: ', () => {
       ]);
 
       await (await db).sync(john.augur, mock.constants.chunkSize, 0);
-    }, 120000);
+    });
 
     test('should require marketId', async () => {
       await expect(api.route('getMarketOrderBook', {})).rejects.toThrowError();

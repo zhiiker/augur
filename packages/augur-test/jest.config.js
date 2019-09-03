@@ -21,4 +21,5 @@ module.exports = {
   ],
   "testURL": "http://localhost:8080/",
   "globalSetup": "./setup.js",
+  "setupFilesAfterEnv": ["./setupEnv.js"]
 };
