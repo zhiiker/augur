@@ -4,11 +4,14 @@ FROM node:${NODE_VERSION}-alpine
 RUN apk add --no-cache \
         bash \
         curl \
+        eudev-dev \
         g++ \
         gcc \
         git \
         libffi-dev \
         libstdc++ \
+        libusb \
+        libusb-dev \
         linux-headers \
         make \
         musl-dev \
