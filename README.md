@@ -49,6 +49,8 @@ Run the following 4 commands, each in a separate terminal session from the root 
 
 or alternatively using docker-compose:
 
+`docker-compose -f support/gitstart/gitstart.yml build`
+`docker run -v `pwd`:/augur -w /augur -i -t gitstart_augur yarn`
 `docker-compose -f support/gitstart/gitstart.yml up`
 
 ### docker images available
