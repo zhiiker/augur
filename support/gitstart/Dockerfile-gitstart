@@ -21,9 +21,10 @@ RUN apk add --no-cache \
         supervisor \
         tmux
 
+
 VOLUME ["/augur"]
 
 WORKDIR /augur
 
-RUN yarn
+#RUN yarn
 
