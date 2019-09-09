@@ -104,7 +104,8 @@
     ]
   },
   "resolutions": {
-    "**/sha3": "2.0.1"
+    "**/sha3": "2.0.1",
+    "ethereumjs-abi": "0.6.7"
   },
   "dependencies": {
     "docusaurus-init": "1.11.0"
