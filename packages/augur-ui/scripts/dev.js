@@ -1,6 +1,7 @@
 const path = require("path");
 const shell = require("shelljs");
 const Listr = require("listr");
+const os = require('os');
 
 const colors = require("./common/colors");
 
@@ -12,7 +13,12 @@ process.env.FORCE_COLOR = true;
 const FLAGS = JSON.parse(process.env.npm_config_argv).original.filter(
   arg => arg.indexOf("--") !== -1
 );
-process.env.NODE_OPTIONS = "--max_old_space_size=6144";
+
+// only set max_old_space_size if os has more than 5GB
+console.log(os.totalmem());
+if(os.totalmem() > 5182156800) {
+  process.env.NODE_OPTIONS = "--max_old_space_size=6144";
+}
 process.env.TYPE_CHECKING = FLAGS.indexOf("--type-checking") !== -1 ? true : false;
 process.env.USE_SSL = FLAGS.indexOf("--ssl") !== -1 ? true : false;
 process.env.AUTO_LOGIN = FLAGS.indexOf("--auto-login") !== -1 ? true : false;
