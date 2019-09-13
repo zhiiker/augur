@@ -18,6 +18,7 @@ import {
   YES_NO,
   PUBLICCREATEORDER,
   PUBLICCREATEORDERS,
+  APPROVE
 } from 'modules/common/constants';
 import { UIOrder, CreateMarketData } from 'modules/types';
 import { convertTransactionOrderToUIOrder } from './transaction-conversions';
@@ -44,6 +45,7 @@ import {
   setLiquidityOrderStatus,
   deleteLiquidityOrder,
 } from 'modules/events/actions/liquidity-transactions';
+import { addAlert } from "modules/alerts/actions/alerts";
 
 export const addUpdateTransaction = (txStatus: Events.TXStatus) => (
   dispatch: ThunkDispatch<void, any, Action>,
@@ -52,12 +54,37 @@ export const addUpdateTransaction = (txStatus: Events.TXStatus) => (
   const { eventName, transaction, hash } = txStatus;
   if (transaction) {
     const methodCall = transaction.name.toUpperCase();
+    const { blockchain } = getState();
+
+    if (hash && eventName === TXEventName.Failure) {
+      dispatch(addAlert({
+        id: hash,
+        params: transaction.params,
+        status: eventName,
+        timestamp: blockchain.currentAugurTimestamp * 1000,
+        name: transaction.name,
+      }));
+    }
+    
     switch (methodCall) {
+      case APPROVE: {
+        if (eventName === TXEventName.Success) {
+          dispatch(addAlert({
+            id: hash,
+            params: transaction.params,
+            status: eventName,
+            timestamp: blockchain.currentAugurTimestamp * 1000,
+            name: transaction.name,
+          }));
+        }
+        break;
+      }
       case PUBLICCREATEORDERS: {
         const { marketInfos } = getState();
         const marketId = transaction.params[TX_MARKET_ID];
         const market = marketInfos[marketId];
         setLiquidityMultipleOrdersStatus(txStatus, market, dispatch);
+        
         if (eventName === TXEventName.Success) {
           deleteMultipleLiquidityOrders(txStatus, market, dispatch);
         }
@@ -68,6 +95,7 @@ export const addUpdateTransaction = (txStatus: Events.TXStatus) => (
         const marketId = transaction.params[TX_MARKET_ID];
         const market = marketInfos[marketId];
         setLiquidityOrderStatus(txStatus, market, dispatch);
+
         if (eventName === TXEventName.Success) {
           deleteLiquidityOrder(txStatus, market, dispatch);
         }
@@ -94,7 +122,6 @@ export const addUpdateTransaction = (txStatus: Events.TXStatus) => (
       case CREATESCALARMARKET:
       case CREATEYESNOMARKET: {
         const id = generateTxParameterId(transaction.params);
-        const { blockchain } = getState();
         const data = createMarketData(
           transaction.params,
           id,
