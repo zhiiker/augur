@@ -21,6 +21,7 @@ import { TXStatus } from "./event-handlers";
 import { Trade, PlaceTradeDisplayParams, SimulateTradeData } from "./api/Trade";
 import { Trading } from "./state/getter/Trading";
 import { Users } from "./state/getter/Users";
+import { Platform as PlatformGetter } from "./state/getter/Platform";
 import { getAddress } from "ethers/utils/address";
 import { isSubscriptionEventName, SubscriptionEventName, TXEventName } from "./constants";
 import { Liquidity } from "./api/Liquidity";
@@ -292,6 +293,8 @@ export class Augur<TProvider extends Provider = Provider> {
   getAccountTransactionHistory = this.bindTo(Accounts.getAccountTransactionHistory);
   getAccountReportingHistory = this.bindTo(Accounts.getAccountReportingHistory);
   getDisputeWindow = this.bindTo(Universe.getDisputeWindow);
+
+  getPlatformActivityStats = this.bindTo(PlatformGetter.getPlatformActivityStats);
 
   async simulateTrade(params: PlaceTradeDisplayParams): Promise<SimulateTradeData> {
     return this.trade.simulateTrade(params);

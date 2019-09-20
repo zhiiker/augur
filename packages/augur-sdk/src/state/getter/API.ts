@@ -9,6 +9,7 @@ import './Trading';
 import './Users';
 import './Accounts';
 import './Universe';
+import './Platform';
 import './Liquidity';
 import './ZeroXOrdersGetters';
 import './status';
