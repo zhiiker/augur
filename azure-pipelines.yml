@@ -289,10 +289,10 @@ jobs:
 
   - job: Build_Core_Docker
     dependsOn:
-    - TestAndLint
+#   - TestAndLint
     - Augur_build_docker_image
     - PreFlightCheck
-    - Contract_Changes_and_no_Compile_check
+#   - Contract_Changes_and_no_Compile_check
     condition: |
       and
       (
@@ -461,7 +461,7 @@ jobs:
 
   - job: Docker_populated_geth_images
     dependsOn:
-    - Test_Augur_Core
+    - Build_Core_Docker
 #   - Docker_geth_dev
     condition: |
       and(
