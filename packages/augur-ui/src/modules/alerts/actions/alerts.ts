@@ -27,6 +27,8 @@ export const ADD_ALERT = 'ADD_ALERT';
 export const REMOVE_ALERT = 'REMOVE_ALERT';
 export const UPDATE_EXISTING_ALERT = 'UPDATE_EXISTING_ALERT';
 export const CLEAR_ALERTS = 'CLEAR_ALERTS';
+export const REMOVE_ORDER_ALERT = 'REMOVE_ORDER_ALERT';
+export const UPDATE_EXISTING_ORDER_ALERT = 'UPDATE_EXISTING_ORDER_ALERT';
 
 export function addAlert(alert: any) {
   return (dispatch: ThunkDispatch<void, any, Action>) => {
@@ -56,21 +58,21 @@ export function addAlert(alert: any) {
   };
 }
 
-export function removeAlert(id: string, name: string) {
+export function removeAlert(id: string, name: string, order?: boolean) {
   return {
-    type: REMOVE_ALERT,
+    type: order ? REMOVE_ORDER_ALERT : REMOVE_ALERT,
     data: { id, name },
   };
 }
 
-export function updateExistingAlert(id, alert) {
+export function updateExistingAlert(id, alert, order?: boolean) {
   return (dispatch, getState) => {
     const callback = alert => {
       const fullAlert = {
-        type: UPDATE_EXISTING_ALERT,
+        type: order ? UPDATE_EXISTING_ORDER_ALERT : UPDATE_EXISTING_ALERT,
         data: {
           id,
-          alert,
+          alert
         },
       };
       return fullAlert;
@@ -115,9 +117,11 @@ export function updateAlert(id: string, alert: any) {
             findAlert =>
               (findAlert.name.toUpperCase() === PUBLICTRADE ||
                 findAlert.name.toUpperCase() === PUBLICTRADEWITHLIMIT) &&
-              findAlert.id === id
-          );
+                findAlert.params._tradeGroupId === alert.params.tradeGroupId  && findAlert.params._price.eq(new BigNumber(alert.params.price))
+          ); // todo: need to make sure it has same outcome, price, and order type
           if (foundOpenOrder) {
+            console.log(foundOpenOrder);
+            console.log(alert);
             const amountFilled = new BigNumber(alert.params.amountFilled);
             const orderAmount = new BigNumber(
               foundOpenOrder.params._amount || foundOpenOrder.params.amount
@@ -125,18 +129,22 @@ export function updateAlert(id: string, alert: any) {
 
             if (amountFilled.lt(orderAmount)) {
               // if part of order is unfilled, update placed order
+              // todo: need to make sure right alert is getting updated 
               dispatch(
-                updateExistingAlert(foundOpenOrder.id, {
+                updateExistingAlert(foundOpenOrder.params._tradeGroupId, {
                   ...foundOpenOrder,
                   params: {
                     ...foundOpenOrder.params,
                     _amount: orderAmount.minus(amountFilled),
                   },
-                })
+                }, 
+                true
+                )
               );
             } else {
-              // if full order was filled, then delete placed order
-              dispatch(removeAlert(foundOpenOrder.id, foundOpenOrder.name));
+              // if full order was filled, then delete placed orderx
+              // todo: need to make sure right alert is getting updated
+              dispatch(removeAlert(foundOpenOrder.params._tradeGroupId, foundOpenOrder.name, true));
             }
           }
         }
@@ -150,8 +158,8 @@ export function updateAlert(id: string, alert: any) {
             (findAlert.name.toUpperCase() === PUBLICFILLORDER ||
               findAlert.name.toUpperCase() === PUBLICFILLBESTORDERWITHLIMIT ||
               findAlert.name.toUpperCase() === PUBLICFILLBESTORDER) &&
-            findAlert.id === id
-        );
+            findAlert.params.tradeGroupId === alert.params._tradeGroupId && new BigNumber(findAlert.params.price).eq(alert.params._price)
+        ); // todo: need to make sure it has same outcome, price, and order type
         if (foundFilledOrder) {
           if (
             foundFilledOrder.params.orderCreator.toUpperCase() !==
@@ -174,12 +182,10 @@ export function updateAlert(id: string, alert: any) {
           }
         }
       }
-      const foundAlert = alerts.find(findAlert => {
-        return (
-          findAlert.id === id &&
-          findAlert.name.toUpperCase() === alert.name.toUpperCase()
-        );
-      });
+      const foundAlert = alerts.find(findAlert =>
+        findAlert.id === id &&
+        findAlert.name.toUpperCase() === alert.name.toUpperCase()
+      );
       if (foundAlert) {
         dispatch(removeAlert(id, alert.name));
         dispatch(

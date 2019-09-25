@@ -2,7 +2,9 @@ import {
   ADD_ALERT,
   REMOVE_ALERT,
   UPDATE_EXISTING_ALERT,
-  CLEAR_ALERTS
+  CLEAR_ALERTS,
+  REMOVE_ORDER_ALERT,
+  UPDATE_EXISTING_ORDER_ALERT
 } from "modules/alerts/actions/alerts";
 import { RESET_STATE } from "modules/app/actions/reset-state";
 import { CLEAR_LOGIN_ACCOUNT } from "modules/account/actions/login-account";
@@ -45,6 +47,26 @@ export default function alert(alerts = DEFAULT_STATE, { data, type }: BaseAction
       if (!data.alert.name || data.alert.name === "") return alerts;
       return [...alerts, data.alert];
     }
+
+    case UPDATE_EXISTING_ORDER_ALERT:
+      let updatedOrderAlerts = alerts.map((alert, i) => {
+        const alertId = alert.params.tradeGroupId ? alert.params.tradeGroupId : alert.params._tradeGroupId;
+        if (alertId !== data.id || data.alert.name.toUpperCase() !== alert.name.toUpperCase()) {
+          return alert;
+        }
+
+        return {...alert, ...data.alert};
+      });
+
+      return updatedOrderAlerts;
+
+    case REMOVE_ORDER_ALERT:
+      let newOrderAlerts = alerts;
+      newOrderAlerts = newOrderAlerts.filter((alert, i) => {
+        const alertId = alert.params.tradeGroupId ? alert.params.tradeGroupId : alert.params._tradeGroupId;
+        return alertId !== data.id || data.name.toUpperCase() !== alert.name.toUpperCase()
+      })
+      return newOrderAlerts;
 
     case UPDATE_EXISTING_ALERT:
       let updatedAlerts = alerts.map((alert, i) => {
