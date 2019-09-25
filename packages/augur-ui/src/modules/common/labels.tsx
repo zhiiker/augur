@@ -40,8 +40,6 @@ export interface MarketStatusProps {
 
 export interface InReportingLabelProps extends MarketStatusProps {
   disputeInfo: Getters.Markets.DisputeInfo;
-  endTimeFormatted: DateFormattedObject;
-  currentAugurTimestamp: number;
 }
 
 export interface MovementLabelProps {
@@ -203,9 +201,8 @@ export const TimeLabel = ({ label, time, showLocal }: TimeLabelProps) => {
       <span>{time.formattedShortUtc}</span>
       {showLocal && <span>{time.formattedShortTimezone}</span>}
     </div>
-  )
-}
-
+  );
+};
 
 export const DashlineNormal = () => (
   <svg width="100%" height="1">
@@ -589,12 +586,7 @@ export const MarketStatusLabel = (props: MarketStatusProps) => {
 };
 
 export const InReportingLabel = (props: InReportingLabelProps) => {
-  const {
-    reportingState,
-    disputeInfo,
-    endTimeFormatted,
-    currentAugurTimestamp,
-  } = props;
+  const { reportingState, disputeInfo } = props;
 
   const reportingStates = [
     REPORTING_STATE.DESIGNATED_REPORTING,
@@ -609,28 +601,22 @@ export const InReportingLabel = (props: InReportingLabelProps) => {
 
   let reportingExtraText: string | null;
   const text: string = constants.IN_REPORTING;
-  let customLabel: string | null = null;
 
   if (reportingState === REPORTING_STATE.DESIGNATED_REPORTING) {
     reportingExtraText = constants.WAITING_ON_REPORTER;
-    customLabel = constants.REPORTING_ENDS;
   } else if (reportingState === REPORTING_STATE.OPEN_REPORTING) {
     reportingExtraText = constants.OPEN_REPORTING;
   } else if (disputeInfo.disputePacingOn) {
     reportingExtraText = constants.SLOW_DISPUTE;
   } else if (!disputeInfo.disputePacingOn) {
     reportingExtraText = constants.FAST_DISPUTE;
-    customLabel = constants.DISPUTE_ENDS;
   } else {
     reportingExtraText = null;
   }
 
   return (
     <span
-      className={classNames(
-        Styles.MarketStatus,
-        Styles.MarketStatus_reporting
-      )}
+      className={classNames(Styles.MarketStatus, Styles.MarketStatus_reporting)}
     >
       {text}
       {reportingExtraText && (
@@ -902,7 +888,10 @@ export const LinearPropertyViewTransaction = (
       value=""
       highlightFirst={props.highlightFirst}
     />
-    <ViewTransactionDetailsButton light transactionHash={props.transactionHash} />
+    <ViewTransactionDetailsButton
+      light
+      transactionHash={props.transactionHash}
+    />
   </div>
 );
 
@@ -917,7 +906,7 @@ export const WordTrail = ({ items, typeLabel, children }: WordTrailProps) => (
         onClick={e => onClick()}
       >
         <span>{label}</span>
-        <span>{index !== items.length - 1  && '/'}</span>
+        <span>{index !== items.length - 1 && '/'}</span>
       </button>
     ))}
   </div>
@@ -940,11 +929,9 @@ WordTrail.defaultProps = {
   typeLabel: 'label-type',
 };
 
-export const CategoryTagTrail = ({
-  categories,
-}: CategoryTagTrailProps) => (
+export const CategoryTagTrail = ({ categories }: CategoryTagTrailProps) => (
   <div className={Styles.CategoryTagTrail}>
-    <WordTrail items={categories} typeLabel='Category' />
+    <WordTrail items={categories} typeLabel="Category" />
   </div>
 );
 
@@ -1045,9 +1032,7 @@ ValueDenomination.defaultProps = {
   hideDenomination: false,
 };
 
-export const MarketStateLabel = (
-  props: MarketStateLabelProps
-) => (
+export const MarketStateLabel = (props: MarketStateLabelProps) => (
   <div
     onClick={() => props.handleClick()}
     className={classNames(Styles.MarketLabel, {
@@ -1059,9 +1044,7 @@ export const MarketStateLabel = (
     })}
   >
     <div>{props.label}</div>
-    {props.selected && !props.loading && (
-      <div>{props.count}</div>
-    )}
+    {props.selected && !props.loading && <div>{props.count}</div>}
     {props.loading && props.selected && (
       <div>
         <span>{LoadingEllipse}</span>

@@ -10,11 +10,10 @@ import {
   LeftChevron,
 } from 'modules/common/icons';
 import MarkdownRenderer from 'modules/common/markdown-renderer';
-import MarketHeaderBar from 'modules/market/containers/market-header-bar';
+import { MarketHeaderBar } from 'modules/market/components/market-header/market-header-bar';
 import { BigNumber } from 'bignumber.js';
 import Styles from 'modules/market/components/market-header/market-header.styles.less';
 import CoreProperties from 'modules/market/components/core-properties/core-properties';
-import ChevronFlip from 'modules/common/chevron-flip';
 import { MarketTypeLabel, TimeLabel } from 'modules/common/labels';
 import { MarketHeaderCollapsed } from 'modules/market/components/market-header/market-header-collapsed';
 import makeQuery from 'modules/routes/helpers/make-query';
@@ -23,47 +22,14 @@ import {
   TAGS_PARAM_NAME,
   SCALAR,
   COPY_MARKET_ID,
-  COPY_AUTHOR
+  COPY_AUTHOR,
 } from 'modules/common/constants';
 import MarketHeaderReporting from 'modules/market/containers/market-header-reporting';
-import { MarketTimeline } from 'modules/common/progress';
-import { convertUnixToFormattedDate } from 'utils/format-date';
-import { PaperClip, Person } from "modules/common/icons";
-import { FavoritesButton } from "modules/common/buttons";
+import { PaperClip, Person } from 'modules/common/icons';
 import ToggleHeightStyles from 'utils/toggle-height.styles.less';
 import { MarketData, QueryEndpoints } from 'modules/types';
-import Clipboard from "clipboard";
-import { DotSelection } from "modules/common/selection";
-
+import { ActionBar } from 'modules/market/components/market-header/action-bar';
 const OVERFLOW_DETAILS_LENGTH = 110; // in px, overflow limit to trigger MORE details
-
-// TODO: add this to top left -- refactor into it's own component:
-// clipboardMarketId: any = new Clipboard("#copy_marketId");
-// clipboardAuthor: any = new Clipboard("#copy_author");
-// {addToFavorites && (
-//   <div>
-//     <FavoritesButton
-//       action={() => addToFavorites()}
-//       isFavorite={isFavorite}
-//       hideText
-//       disabled={!isLogged}
-//     />
-//   </div>
-// )}
-// <DotSelection>
-//   <div
-//     id="copy_marketId"
-//     data-clipboard-text={marketId}
-//   >
-//     {PaperClip} {COPY_MARKET_ID}
-//   </div>
-//   <div
-//     id="copy_author"
-//     data-clipboard-text={author}
-//   >
-//     {Person} {COPY_AUTHOR}
-//   </div>
-// </DotSelection>
 
 interface MarketHeaderProps {
   description: string;
@@ -113,7 +79,6 @@ export default class MarketHeader extends Component<
     this.gotoFilter = this.gotoFilter.bind(this);
     this.toggleReadMore = this.toggleReadMore.bind(this);
     this.updateDetailsHeight = this.updateDetailsHeight.bind(this);
-    this.addToFavorites = this.addToFavorites.bind(this);
   }
 
   componentDidMount() {
@@ -134,10 +99,6 @@ export default class MarketHeader extends Component<
 
   toggleReadMore() {
     this.setState({ showReadMore: !this.state.showReadMore });
-  }
-
-  addToFavorites() {
-    this.props.toggleFavorite(this.props.market.id);
   }
 
   gotoFilter(type, value) {
@@ -171,6 +132,7 @@ export default class MarketHeader extends Component<
       isFavorite,
       history,
       preview,
+      toggleFavorite
     } = this.props;
     let { details } = this.props;
     const { headerCollapsed } = this.state;
@@ -195,6 +157,18 @@ export default class MarketHeader extends Component<
 
     const categoriesWithClick = process(market.categories) || [];
 
+    const ActionBarProps = {
+      categoriesWithClick,
+      onClickBack: () => history.goBack(),
+      addToFavorites: () => toggleFavorite(market.id),
+      isFavorite,
+      isLogged,
+      isCollapsed: headerCollapsed,
+      marketId: market.id,
+      author: market.author,
+      marketType: market.marketType,
+    };
+
     return (
       <section
         className={classNames(
@@ -209,22 +183,12 @@ export default class MarketHeader extends Component<
         )}
       >
         <div>
-          <WordTrail items={[...categoriesWithClick]}>
-            <button
-              className={Styles.BackButton}
-              onClick={() => history.goBack()}
-            >
-              {LeftChevron} Back
-            </button>
-            <MarketTypeLabel marketType={marketType} />
-          </WordTrail>
+          <ActionBar {...ActionBarProps} />
           <div className={Styles.Properties}>
             {(market.id || preview) && (
               <MarketHeaderBar
-                marketStatus={market.marketStatus}
                 reportingState={market.reportingState}
                 disputeInfo={market.disputeInfo}
-                endTimeFormatted={market.endTimeFormatted}
               />
             )}
           </div>
@@ -275,10 +239,8 @@ export default class MarketHeader extends Component<
             <div className={Styles.Properties}>
               {(market.id || preview) && (
                 <MarketHeaderBar
-                  marketStatus={market.marketStatus}
                   reportingState={market.reportingState}
                   disputeInfo={market.disputeInfo}
-                  endTimeFormatted={market.endTimeFormatted}
                 />
               )}
               {/* <MarketHeaderReporting
@@ -292,9 +254,12 @@ export default class MarketHeader extends Component<
                   <TimeLabel
                     label="Date Created"
                     time={market.creationTimeFormatted}
+                  />
+                  <TimeLabel
+                    label="Reporting Starts"
+                    time={market.endTimeFormatted}
                     showLocal
                   />
-                  <TimeLabel label="Reporting Starts" time={market.endTimeFormatted} />
                 </div>
               </div>
             </div>

@@ -3,7 +3,6 @@
 
 .MarketHeader {
   background: @color-module-background;
-  border: 1px solid @color-dark-grey;
   color: @color-secondary-text;
   display: flex;
   flex: 1;
@@ -28,10 +27,12 @@
     width: 100%;
 
     > div:first-of-type {
+      border: 1px solid @color-dark-grey;
+      border-bottom: none;
+      border-right: none;
       display: flex;
       flex: 1;
       flex-wrap: wrap;
-      margin-right: @size-20;
       max-width: 654px;
       padding-top: 2px;
 
@@ -54,8 +55,14 @@
 .TimeSection {
   background: @color-module-background;
   border: 1px solid @color-dark-grey;
+  border-top: none;
   max-width: 240px;
+  padding: @size-12 @size-16;
   width: 200px;
+
+  > div:first-of-type {
+    margin-bottom: @size-10;
+  }
 }
 
 .Toggle {
@@ -138,9 +145,12 @@
   }
 
   > div:first-of-type {
+    border: 1px solid @color-dark-grey;
+    border-right: none;
+    border-top: none;
     flex: 1;
-    margin-right: @size-20;
     max-width: 654px;
+    padding: 0 @size-16;
 
     &.Collapsed { 
       display: flex;
@@ -153,10 +163,14 @@
 
       color: @color-primary-text;
       flex-grow: 1;
+      margin-bottom: @size-8;
+    }
+
+    > div {
+      margin-bottom: @size-8;
     }
 
     > div:first-of-type {
-      padding: 0 0 @size-16;
 
       > p {
         margin-bottom: 0;
@@ -220,20 +234,24 @@
 }
 
 .Properties {
-  border: 1px solid @color-dark-grey;
   display: flex;
   flex: 1;
   flex-direction: column;
 }
 
 .Core {
-  border: 1px solid @color-dark-grey;
   display: flex;
 
   > div:first-of-type {
     @media @breakpoint-mobile {
       padding-top: @size-16;
     }
+  }
+
+  > div[class*="CoreProperties"] {
+    border: 1px solid @color-dark-grey;
+    border-top: none;
+    padding: @size-12 @size-16;
   }
 
   > div {

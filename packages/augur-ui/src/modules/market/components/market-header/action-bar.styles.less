@@ -1,0 +1,53 @@
+@import (reference) "~assets/styles/shared";
+
+.ActionBar {
+  align-items: center;
+  background: @color-module-background;
+  display: flex;
+  height: @size-32;
+  justify-items: center;
+  padding: 0 @size-8 0 @size-16;
+
+  > div[class*="WordTrail"] > span {
+    margin-right: @size-10;
+  }
+
+  > button:first-of-type {
+    margin-left: auto;
+  }
+  
+  > button {
+    display: flex;
+    margin-right: @size-8;
+  }
+  
+  > button:nth-of-type(3) > svg {
+    fill: none;
+    height: @size-16;
+    width: @size-14;
+    margin-top: 0;
+
+    > path {
+      fill: @color-primary-text;
+    }
+  }
+}
+
+.BackButton {
+  .text-10;
+
+  align-items: baseline;
+  color: @color-primary-text;
+  display: flex;
+  text-transform: capitalize;
+  margin-right: @size-10;
+
+  svg {
+    height: @size-6;
+    width: @size-10;
+
+    path {
+      stroke: @color-primary-text;
+    }
+  }
+}
