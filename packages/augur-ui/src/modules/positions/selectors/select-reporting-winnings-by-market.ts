@@ -68,9 +68,10 @@ export const selectReportingWinningsByMarket = createSelector(
       userReporting.reporting &&
       userReporting.reporting.contracts.length > 0
     ) {
-      claimableMarkets = userReporting.reporting.contracts.reduce(
-        (p, contract) =>
-          isClaimable(contract.marketId) ? sumClaims(contract, p) : p,
+      claimableMarkets = userReporting.reporting.contracts.filter(
+        contract => isClaimable(contract.marketId)
+      ).reduce(
+        (p, contract) => sumClaims(contract, p),
         claimableMarkets
       );
     }
@@ -79,9 +80,10 @@ export const selectReportingWinningsByMarket = createSelector(
       userReporting.disputing &&
       userReporting.disputing.contracts.length > 0
     ) {
-      claimableMarkets = userReporting.disputing.contracts.reduce(
-        (p, contract) =>
-          isClaimable(contract.marketId) ? sumClaims(contract, p) : p,
+      claimableMarkets = userReporting.disputing.contracts.filter(
+        contract => isClaimable(contract.marketId)
+      ).reduce(
+        (p, contract) => sumClaims(contract, p),
         claimableMarkets
       );
     }
@@ -115,8 +117,11 @@ function sumClaims(
     );
     found.contracts = [...found.contracts, contractInfo.address];
     addedValue = createBigNumber(found.totalAmount);
+    marketsCollection.unclaimedRep = marketsCollection.unclaimedRep.plus(
+      addedValue
+    );
   } else {
-    addedValue = createBigNumber(contractInfo.amount);
+    // addedValue = createBigNumber(contractInfo.amount);
     marketsCollection.marketContracts = [
       ...marketsCollection.marketContracts,
       {
@@ -127,9 +132,6 @@ function sumClaims(
       },
     ];
   }
-  marketsCollection.unclaimedRep = marketsCollection.unclaimedRep.plus(
-    addedValue
-  );
   return marketsCollection;
 }
 
