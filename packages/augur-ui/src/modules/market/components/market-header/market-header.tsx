@@ -135,9 +135,9 @@ export default class MarketHeader extends Component<
       toggleFavorite
     } = this.props;
     let { details } = this.props;
-    const { headerCollapsed } = this.state;
+    const { headerCollapsed, showReadMore, detailsHeight } = this.state;
     const detailsTooLong =
-      market.details && this.state.detailsHeight > OVERFLOW_DETAILS_LENGTH;
+      market.details && detailsHeight > OVERFLOW_DETAILS_LENGTH;
 
     if (marketType === SCALAR) {
       const denomination = scalarDenomination ? ` ${scalarDenomination}` : '';
@@ -214,7 +214,7 @@ export default class MarketHeader extends Component<
                       this.detailsContainer = detailsContainer;
                     }}
                     className={classNames(Styles.AdditionalDetails, {
-                      [Styles.Tall]: detailsTooLong && this.state.showReadMore,
+                      [Styles.Tall]: detailsTooLong && showReadMore,
                     })}
                   >
                     <MarkdownRenderer text={details} hideLabel />
@@ -223,14 +223,14 @@ export default class MarketHeader extends Component<
                   {detailsTooLong && (
                     <button
                       className={classNames({
-                        [Styles.Less]: this.state.showReadMore,
+                        [Styles.Less]: showReadMore,
                       })}
                       onClick={this.toggleReadMore}
                     >
-                      {!this.state.showReadMore
+                      {!showReadMore
                         ? ChevronDown({ stroke: '#FFFFFF' })
                         : ChevronUp()}
-                      <span>{!this.state.showReadMore ? 'More' : 'Less'}</span>
+                      <span>{!showReadMore ? 'More' : 'Less'}</span>
                     </button>
                   )}
                 </div>
