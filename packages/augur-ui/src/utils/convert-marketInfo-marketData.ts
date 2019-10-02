@@ -25,6 +25,10 @@ import { getOutcomeNameWithOutcome } from './get-outcome';
 export function convertMarketInfoToMarketData(
   marketInfo: Getters.Markets.MarketInfo
 ) {
+  const isReporting =
+    marketInfo.reportingState !== REPORTING_STATE.PRE_REPORTING &&
+    marketInfo.reportingState !== REPORTING_STATE.AWAITING_FINALIZATION &&
+    marketInfo.reportingState !== REPORTING_STATE.FINALIZED;
   const reportingFee = parseInt(marketInfo.reportingFeeRate || '0', 10);
   const creatorFee = parseInt(marketInfo.marketCreatorFeeRate || '0', 10);
   const allFee = createBigNumber(marketInfo.settlementFee || '0');
@@ -70,7 +74,8 @@ export function convertMarketInfoToMarketData(
     disputeInfo: processDisputeInfo(
       marketInfo.marketType,
       marketInfo.disputeInfo,
-      marketInfo.outcomes
+      marketInfo.outcomes,
+      isReporting
     ),
   };
 
@@ -127,9 +132,9 @@ function processOutcomes(
   }));
 }
 
-function getEmptyStake(outcomeId: number, bondSizeOfNewStake: string) {
+function getEmptyStake(outcomeId: number | null, bondSizeOfNewStake: string) {
   return {
-    outcome: String(outcomeId),
+    outcome: outcomeId !== null ? String(outcomeId) : null,
     bondSizeCurrent: bondSizeOfNewStake,
     stakeCurrent: '0',
     stakeRemaining: bondSizeOfNewStake,
@@ -143,19 +148,23 @@ function getEmptyStake(outcomeId: number, bondSizeOfNewStake: string) {
 function processDisputeInfo(
   marketType: string,
   disputeInfo: Getters.Markets.DisputeInfo,
-  outcomes: Getters.Markets.MarketInfoOutcome[]
+  outcomes: Getters.Markets.MarketInfoOutcome[],
+  isReporting: boolean,
 ): Getters.Markets.DisputeInfo {
-  if (!disputeInfo) return disputeInfo;
+  if (!disputeInfo || !isReporting) return disputeInfo;
   if (marketType === SCALAR) {
     const invalidIncluded = disputeInfo.stakes.find(
       s => Number(s.outcome) === INVALID_OUTCOME_ID
     );
-    if (invalidIncluded) return disputeInfo;
+    // add blank outcome
+    const blankStake = getEmptyStake(null, disputeInfo.bondSizeOfNewStake)
+    if (invalidIncluded) return {...disputeInfo, stakes: [...disputeInfo.stakes, blankStake]};
     return {
       ...disputeInfo,
       stakes: [
         ...disputeInfo.stakes,
         getEmptyStake(INVALID_OUTCOME_ID, disputeInfo.bondSizeOfNewStake),
+        blankStake
       ],
     };
   }
@@ -200,7 +209,7 @@ function processConsensus(
       ...winning,
       winningOutcome: winning.outcome,
       outcomeName: isScalar
-        ? market.consensus.outcome
+        ? winning.outcome
         : getOutcomeNameWithOutcome(
             market,
             winning.outcome,
