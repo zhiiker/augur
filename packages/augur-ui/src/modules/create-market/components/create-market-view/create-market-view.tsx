@@ -36,6 +36,7 @@ export default class CreateMarketView extends React.Component<
         <Helmet>
           <title>Create Market</title>
         </Helmet>
+        <UniverseCard />
         {page === LANDING &&
           <Landing updatePage={this.updatePage} />
         }
