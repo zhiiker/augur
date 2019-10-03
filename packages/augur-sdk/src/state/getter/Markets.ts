@@ -710,12 +710,12 @@ export class Markets {
     db: DB,
     params: t.TypeOf<typeof Markets.getMarketsInfoParams>
   ): Promise<MarketInfo[]> {
-    console.log('ABRAKADABRA', 2);
+    // console.log('ABRAKADABRA', 2);
     const markets = await db.findMarkets({ selector: { market: { $in: params.marketIds } }});
-    console.log('ABRAKADABRA', 3);
+    // console.log('ABRAKADABRA', 3);
     const reportingFeeDivisor = await augur.contracts.universe.getOrCacheReportingFeeDivisor_();
 
-    console.log('ABRAKADABRA', 4);
+    // console.log('ABRAKADABRA', 4);
     return await getMarketsInfo(db, markets, reportingFeeDivisor);
   }
 
@@ -959,21 +959,21 @@ async function getMarketsInfo(
   markets: MarketData[],
   reportingFeeDivisor: BigNumber
 ): Promise<MarketInfo[]> {
-  console.log('ABRAKADABRA', 100);
+  // console.log('ABRAKADABRA', 100);
   const marketIds = _.map(markets, "market");
-  console.log('ABRAKADABRA', 101);
+  // console.log('ABRAKADABRA', 101);
   // TODO add marketIndex to this DB and specify here through use_index
   const orderFilledLogs = await db.findOrderFilledLogs({ selector: { market: { $in: marketIds } }});
-  console.log('ABRAKADABRA', 102);
+  // console.log('ABRAKADABRA', 102);
   let disputeDocs = await db.findDisputeDocs({
     selector: {market: { $in: marketIds }},
     // use_index: "marketIndex"
   });
-  console.log('ABRAKADABRA', 5);
+  // console.log('ABRAKADABRA', 5);
   const disputeDocsByMarket = _.groupBy(disputeDocs, "market");
   const orderFilledLogsByMarket = _.groupBy(orderFilledLogs, "market");
 
-  console.log('ABRAKADABRA', 6);
+  // console.log('ABRAKADABRA', 6);
   return _.map(markets, (marketData) => {
     const orderFilledLogs = orderFilledLogsByMarket[marketData.market] || [];
 
@@ -994,7 +994,7 @@ async function getMarketsInfo(
     let finalizationBlockNumber = null;
     let finalizationTime = null;
 
-    console.log('ABRAKADABRA', 7);
+    // console.log('ABRAKADABRA', 7);
     if (marketData.winningPayoutNumerators) {
       let payouts = [];
       for (let i = 0; i < marketData.winningPayoutNumerators.length; i++) {
@@ -1005,7 +1005,7 @@ async function getMarketsInfo(
       consensus = calculatePayoutNumeratorsValue(String(displayMaxPrice), String(displayMinPrice), String(numTicks), marketType, payouts);
     }
 
-    console.log('ABRAKADABRA', 8);
+    // console.log('ABRAKADABRA', 8);
     let categories:string[] = [];
     let description = null;
     let details = null;
@@ -1037,7 +1037,7 @@ async function getMarketsInfo(
     const settlementFee = marketCreatorFeeRate.plus(reportingFeeRate);
     const noShowBondAmount = new BigNumber(marketData.noShowBond).toFixed();
 
-    console.log('ABRAKADABRA', 9);
+    // console.log('ABRAKADABRA', 9);
     // TODO: Create a derived DB for market / outcome indexed data to get last price
     // Also use this DB to populate the "lastTradedTimestamp" field on the market derived DB to use for sorting
     const outcomes = getMarketOutcomes(
@@ -1062,7 +1062,7 @@ async function getMarketsInfo(
       stakes: formatStakeDetails(db, marketData, disputeDocsByMarket[marketData.market] || []),
     };
 
-    console.log('ABRAKADABRA', 10);
+    // console.log('ABRAKADABRA', 10);
     return {
       id: marketData.market,
       universe: marketData.universe,

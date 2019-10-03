@@ -12,16 +12,19 @@ import { estimateSubmitNewMarket } from "modules/markets/actions/estimate-submit
 import getValue from "utils/get-value";
 import { getGasPrice } from "modules/auth/selectors/get-gas-price";
 
-const mapStateToProps = state => ({
-  universe: state.universe,
-  availableEth: state.loginAccount.balances.eth,
-  availableRep: state.loginAccount.balances.rep,
-  meta: getValue(state, "loginAccount.meta"),
-  newMarket: state.newMarket,
-  isMobileSmall: state.appStatus.isMobileSmall,
-  currentTimestamp: selectCurrentTimestamp(state),
-  gasPrice: getGasPrice(state)
-});
+const mapStateToProps = state => {
+  return {
+    universe: state.universe,
+    loginAccount: state.loginAccount.address,
+    availableEth: state.loginAccount.balances.eth,
+    availableRep: state.loginAccount.balances.rep,
+    meta: getValue(state, "loginAccount.meta"),
+    newMarket: state.newMarket,
+    isMobileSmall: state.appStatus.isMobileSmall,
+    currentTimestamp: selectCurrentTimestamp(state),
+    gasPrice: getGasPrice(state)
+  };
+};
 
 const mapDispatchToProps = dispatch => ({
   addOrderToNewMarket: data => dispatch(addOrderToNewMarket(data)),

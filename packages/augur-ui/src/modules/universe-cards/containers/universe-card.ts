@@ -1,53 +1,70 @@
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
+import { AppState } from 'store';
+import { UniverseCard } from 'modules/universe-cards/components/universe-card';
+// import { toggleFavorite } from 'modules/markets/actions/update-favorites';
+// import { hasStakeInMarket } from 'modules/account/selectors/has-stake-in-market';
+// import { MIGRATE_MARKET_GAS_ESTIMATE, MODAL_MIGRATE_MARKET, MODAL_REPORTING } from 'modules/common/constants';
+// import { updateModal } from 'modules/modal/actions/update-modal';
+import { switchUniverse } from 'modules/universe-cards/actions/switch-universe';
+import { loadUniverseDetails } from 'modules/universe-cards/actions/load-universe-details';
 
-import MarketCard from 'modules/market-cards/market-card';
-import { toggleFavorite } from 'modules/markets/actions/update-favorites';
-import { hasStakeInMarket } from 'modules/account/selectors/has-stake-in-market';
-import { MIGRATE_MARKET_GAS_ESTIMATE, MODAL_MIGRATE_MARKET, MODAL_REPORTING } from 'modules/common/constants';
-import { updateModal } from 'modules/modal/actions/update-modal';
-
-const mapStateToProps = (state, ownProps) => {
-  const positions = state.accountPositions;
-  const hasStaked = hasStakeInMarket(state, ownProps.market.marketId);
-
-  return {
-    hasPosition: !!positions[ownProps.market.marketId],
-    isLogged: state.authStatus.isLogged,
-    isMobile: state.appStatus.isMobile,
-    pendingLiquidityOrders: state.pendingLiquidityOrders,
-    currentAugurTimestamp: state.blockchain.currentAugurTimestamp,
-    disputingWindowEndTime: state.universe.disputeWindow.endTime,
-    address: state.loginAccount.address,
-    isFavorite: !!state.favorites[ownProps.market.marketId],
-    hasStaked,
-  };
+const mapStateToProps = (state: AppState) => {
+  // const positions = state.accountPositions;
+  // return {
+  //   hasPosition: !!positions[ownProps.market.marketId],
+  //   isLogged: state.authStatus.isLogged,
+  //   isMobile: state.appStatus.isMobile,
+  //   pendingLiquidityOrders: state.pendingLiquidityOrders,
+  //   currentAugurTimestamp: state.blockchain.currentAugurTimestamp,
+  //   disputingWindowEndTime: state.universe.disputeWindow.endTime,
+  //   address: state.loginAccount.address,
+  //   isFavorite: !!state.favorites[ownProps.market.marketId],
+  //   hasStaked,
+  // };
 };
 
-const mapDispatchToProps = (dispatch, ownProps) => ({
-  toggleFavorite: marketId => dispatch(toggleFavorite(marketId)),
-  dispute: (selectedOutcome: string) =>
-    dispatch(
-      updateModal({
-        type: MODAL_REPORTING,
-        market: ownProps.market,
-        selectedOutcome,
-      })
-    ),
-  migrateMarketModal: () =>
-    dispatch(
-      updateModal({
-        type: MODAL_MIGRATE_MARKET,
-        market: ownProps.market,
-      })
-    ),
-});
+const mapDispatchToProps = (dispatch, ownProps) => {
+  console.log('ownProps')
+  console.log(ownProps);
+  // toggleFavorite: marketId => dispatch(toggleFavorite(marketId)),
+  // dispute: (selectedOutcome: string) =>
+  //   dispatch(
+  //     updateModal({
+  //       type: MODAL_REPORTING,
+  //       market: ownProps.market,
+  //       selectedOutcome,
+  //     })
+  //   ),
+  // migrateMarketModal: () =>
+  //   dispatch(
+  //     updateModal({
+  //       type: MODAL_MIGRATE_MARKET,
+  //       market: ownProps.market,
+  //     })
+  //   ),
 
-const MarketCardContainer = withRouter(
+  // switchUniverse: (universeId: string) => dispatch(switchUniverse(universeId)),
+  // loadUniverseDetails: (universeId: string, account: string) =>
+  //   dispatch(loadUniverseDetails(universeId, account)),
+};
+
+const mergeProps = (sP: any, dP: any, oP: any) => {
+console.log("MERGE PROPS");
+console.log(sP);
+console.log(dP);
+console.log(oP);
+//   const { loginAccount } = sP;
+//   const universeDetails = loadUniverseDetails(sP.universeI, state.loginAccount.address);
+// console.log(universeDetails);
+//   return universeDetails;
+// console.log(sP.loadUniverseDetails(universe.id, loginAccount.address));
+};
+
+export default withRouter(
   connect(
     mapStateToProps,
-    mapDispatchToProps
-  )(MarketCard)
+    mapDispatchToProps,
+    mergeProps
+  )(UniverseCard)
 );
-
-export default MarketCardContainer;
