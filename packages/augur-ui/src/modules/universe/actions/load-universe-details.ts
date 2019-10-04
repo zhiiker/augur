@@ -13,13 +13,11 @@ export const loadUniverseDetails = (
   if (!(universe && universe.id)) return;
 
   const augur = augurSdk.get();
-console.log('wtf?????????????????')
   const universeDetails= await augur.getUniverseChildren
   ({
     universeId,
     account
   });
-console.log('!!!!!!!!!!!!!!!!!!!!')
 console.log(universeDetails)
   dispatch(updateUniverse({ ...universeDetails }));
 }
