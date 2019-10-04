@@ -29,7 +29,6 @@ import { augurSdk } from 'services/augursdk';
 import { listenForStartUpEvents } from 'modules/events/actions/listen-to-updates';
 import { forceLoginWithInjectedWeb3 } from 'modules/auth/actions/login-with-injected-web3';
 import { loadUniverseForkingInfo } from 'modules/universe/actions/load-forking-info';
-import { loadUniverseDetails } from 'modules/universe/actions/load-universe-details';
 
 const ACCOUNTS_POLL_INTERVAL_DURATION = 10000;
 const NETWORK_ID_POLL_INTERVAL_DURATION = 10000;
