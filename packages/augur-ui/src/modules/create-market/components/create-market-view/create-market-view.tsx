@@ -33,7 +33,7 @@ export default class CreateMarketView extends React.Component<
   render() {
     const { page } = this.state;
 
-    const testUniverseCard = false;
+    const showUniverseCard = false;
 
     return (
       <section className={Styles.CreateMarketView}>
@@ -44,7 +44,7 @@ export default class CreateMarketView extends React.Component<
           <Landing updatePage={this.updatePage} />
         }
         {/* TODO: Remove once UniverseCard is moved to modal */}
-        {testUniverseCard &&
+        {showUniverseCard &&
           <UniverseCard
             universe={this.props.universe.id}
           />
