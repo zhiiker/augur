@@ -31,15 +31,6 @@ const mapStateToProps = (state: AppState, ownProps) => {
         value: universe.numberOfMarkets,
       },
     ],
-    buttons: [
-      {
-        text: 'Switch to this Universe',
-        action: () => {
-          // TBD
-          console.log('Switch to this universe');
-        },
-      },
-    ],
   };
 };
 
@@ -49,9 +40,26 @@ const mapDispatchToProps = (dispatch, ownProps) => {
   };
 };
 
+const mergeProps = (sP: any, dP: any, oP: any) => {
+  return {
+    ...oP,
+    ...sP,
+    ...dP,
+    buttons: [
+      {
+        text: 'Switch to this Universe',
+        action: () => {
+          dP.switchUniverse(sP.universeId)
+        },
+      },
+    ],
+  };
+}
+
 export default withRouter(
   connect(
     mapStateToProps,
-    mapDispatchToProps
+    mapDispatchToProps,
+    mergeProps
   )(UniverseCard)
 );
