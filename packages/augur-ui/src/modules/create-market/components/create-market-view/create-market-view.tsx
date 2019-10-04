@@ -10,7 +10,7 @@ import Styles from "modules/create-market/components/create-market-view/create-m
 
 import UniverseCard from 'modules/universe-cards/containers/universe-card';
 import { UniverseDetails } from '@augurproject/sdk/src/state/getter/Universe';
-import { loadUniverseDetails } from "modules/universe-cards/actions/load-universe-details";
+
 interface CreateMarketViewProps {
   universe: universe;
 }
@@ -33,18 +33,14 @@ export default class CreateMarketView extends React.Component<
   }
 
   render() {
-    const { loginAccount, page, universe } = this.state;
+    const { page } = this.state;
 
-    console.log("?????")
-    console.log(this.state);
-    console.log(this.props);
-    const universeDetails = loadUniverseDetails(this.props.universe.id, this.props.loginAccount);
-    console.log(universeDetails);
     return (
       <section className={Styles.CreateMarketView}>
-        {/* <UniverseCard
-          universeDetails={this.props.universeDetails}
-        /> */}
+        <UniverseCard
+          universe="0x651e51Ea0EE0a43F6230D5E9F1C5d2f5E7838B5d"
+          account="0x913da4198e6be1d5f5e4a40d0667f70c0b5430eb"
+        />
         <Helmet>
           <title>Create Market</title>
         </Helmet>

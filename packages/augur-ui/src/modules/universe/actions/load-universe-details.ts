@@ -1,5 +1,6 @@
 import { augurSdk } from 'services/augursdk';
 import { ThunkAction } from 'redux-thunk';
+import { updateUniverse } from 'modules/universe/actions/update-universe';
 
 export const loadUniverseDetails = (
   universeId: string,
@@ -12,9 +13,13 @@ export const loadUniverseDetails = (
   if (!(universe && universe.id)) return;
 
   const augur = augurSdk.get();
-
-  return augur.getUniverseChildren({
+console.log('wtf?????????????????')
+  const universeDetails= await augur.getUniverseChildren
+  ({
     universeId,
     account
   });
+console.log('!!!!!!!!!!!!!!!!!!!!')
+console.log(universeDetails)
+  dispatch(updateUniverse({ ...universeDetails }));
 }

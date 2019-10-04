@@ -29,6 +29,7 @@ import { augurSdk } from 'services/augursdk';
 import { listenForStartUpEvents } from 'modules/events/actions/listen-to-updates';
 import { forceLoginWithInjectedWeb3 } from 'modules/auth/actions/login-with-injected-web3';
 import { loadUniverseForkingInfo } from 'modules/universe/actions/load-forking-info';
+import { loadUniverseDetails } from 'modules/universe/actions/load-universe-details';
 
 const ACCOUNTS_POLL_INTERVAL_DURATION = 10000;
 const NETWORK_ID_POLL_INTERVAL_DURATION = 10000;
@@ -158,6 +159,7 @@ export function connectAugur(
         } else {
           dispatch(updateUniverse({ id: universeId }));
           dispatch(loadUniverseForkingInfo(universeId));
+          dispatch(loadUniverseDetails(universeId, "0x913dA4198E6bE1D5f5E4a40D0667f70C0B5430Eb"));
           if (modal && modal.type === MODAL_NETWORK_DISCONNECTED)
             dispatch(closeModal());
           if (isInitialConnection) {

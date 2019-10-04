@@ -7,7 +7,6 @@ import { UniverseCard } from 'modules/universe-cards/components/universe-card';
 // import { MIGRATE_MARKET_GAS_ESTIMATE, MODAL_MIGRATE_MARKET, MODAL_REPORTING } from 'modules/common/constants';
 // import { updateModal } from 'modules/modal/actions/update-modal';
 import { switchUniverse } from 'modules/universe-cards/actions/switch-universe';
-import { loadUniverseDetails } from 'modules/universe-cards/actions/load-universe-details';
 
 const mapStateToProps = (state: AppState) => {
   // const positions = state.accountPositions;
@@ -22,11 +21,10 @@ const mapStateToProps = (state: AppState) => {
   //   isFavorite: !!state.favorites[ownProps.market.marketId],
   //   hasStaked,
   // };
+  return {};
 };
 
 const mapDispatchToProps = (dispatch, ownProps) => {
-  console.log('ownProps')
-  console.log(ownProps);
   // toggleFavorite: marketId => dispatch(toggleFavorite(marketId)),
   // dispute: (selectedOutcome: string) =>
   //   dispatch(
@@ -43,10 +41,9 @@ const mapDispatchToProps = (dispatch, ownProps) => {
   //       market: ownProps.market,
   //     })
   //   ),
-
-  // switchUniverse: (universeId: string) => dispatch(switchUniverse(universeId)),
-  // loadUniverseDetails: (universeId: string, account: string) =>
-  //   dispatch(loadUniverseDetails(universeId, account)),
+  return {
+    switchUniverse: (universeId: string) => dispatch(switchUniverse(universeId)),
+  };
 };
 
 const mergeProps = (sP: any, dP: any, oP: any) => {
@@ -59,6 +56,8 @@ console.log(oP);
 // console.log(universeDetails);
 //   return universeDetails;
 // console.log(sP.loadUniverseDetails(universe.id, loginAccount.address));
+  return {
+  };
 };
 
 export default withRouter(
