@@ -1,21 +1,52 @@
 import React from 'react';
-import classNames from 'classnames';
+import {
+  Breakdown,
+  ButtonsRow,
+} from 'modules/modal/common';
+import { DefaultButtonProps } from 'modules/common/buttons';
+import {
+  LinearPropertyLabelProps,
+} from 'modules/common/labels';
 
-import { UniverseDetails } from '@augurproject/sdk/src/state/getter/Universe';
-
-import Styles from 'modules/market-cards/market-card.styles.less';
-import { PrimaryButton } from 'modules/common/buttons';
+import Styles from 'modules/universe-cards/universe-card.styles.less';
 
 interface UniverseCardProps {
-  universeDetails: UniverseDetails;
+  universeId: string;
+  creationTimestamp: string;
+  outcomeName: string;
+  currentUniverse: string;
+  buttons: DefaultButtonProps[];
+  breakdown?: LinearPropertyLabelProps[];
 }
 
-
 export const UniverseCard = ({
-  universeDetails
+  universeId,
+  creationTimestamp,
+  outcomeName,
+  currentUniverse,
+  breakdown,
+  buttons
 }: UniverseCardProps) => {
+
   return (
-    <div>
+    <div className={Styles.UniverseCard}>
+      <div>
+        {universeId === currentUniverse &&
+          <span>Current Universe</span>
+        }
+        <div>
+          <h1>Universe</h1>
+          <div className={Styles.outcomeName}>{outcomeName}</div>
+        </div>
+        <div>
+          <h1>Date Created</h1>
+          <div className={Styles.creationTimestamp}>{creationTimestamp}</div>
+        </div>
+        <Breakdown rows={breakdown} />
+      </div>
+      {universeId !== currentUniverse &&
+        <ButtonsRow buttons={buttons} />
+      }
     </div>
   );
 };

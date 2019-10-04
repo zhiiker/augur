@@ -11,6 +11,7 @@ import { selectCurrentTimestamp } from "store/select-state";
 import { estimateSubmitNewMarket } from "modules/markets/actions/estimate-submit-new-market";
 import getValue from "utils/get-value";
 import { getGasPrice } from "modules/auth/selectors/get-gas-price";
+import { loadUniverseDetails } from 'modules/universe/actions/load-universe-details';
 
 const mapStateToProps = state => {
   return {
@@ -33,13 +34,25 @@ const mapDispatchToProps = dispatch => ({
   submitNewMarket: (data, cb) =>
     dispatch(submitNewMarket(data, cb)),
   estimateSubmitNewMarket: (data, callback) =>
-    dispatch(estimateSubmitNewMarket(data, callback))
+    dispatch(estimateSubmitNewMarket(data, callback)),
+  loadUniverseDetails: (universe, account) =>
+    dispatch(loadUniverseDetails(universe, account))
 });
+
+const mergeProps = (sP: any, dP: any, oP: any) => {
+  dP.loadUniverseDetails(sP.universe.id, sP.loginAccount);
+  return {
+    ...sP,
+    ...dP,
+    ...oP,
+  };
+};
 
 const CreateMarket = withRouter(
   connect(
     mapStateToProps,
-    mapDispatchToProps
+    mapDispatchToProps,
+    mergeProps,
   )(CreateMarketView)
 );
 

@@ -9,10 +9,8 @@ import Landing from "modules/create-market/containers/landing";
 import Styles from "modules/create-market/components/create-market-view/create-market-view.styles.less";
 
 import UniverseCard from 'modules/universe-cards/containers/universe-card';
-import { UniverseDetails } from '@augurproject/sdk/src/state/getter/Universe';
 
 interface CreateMarketViewProps {
-  universe: universe;
 }
 
 interface CreateMarketViewPState {
@@ -35,17 +33,21 @@ export default class CreateMarketView extends React.Component<
   render() {
     const { page } = this.state;
 
+    const testUniverseCard = false;
+
     return (
       <section className={Styles.CreateMarketView}>
-        <UniverseCard
-          universe="0x651e51Ea0EE0a43F6230D5E9F1C5d2f5E7838B5d"
-          account="0x913da4198e6be1d5f5e4a40d0667f70c0b5430eb"
-        />
         <Helmet>
           <title>Create Market</title>
         </Helmet>
         {page === LANDING &&
           <Landing updatePage={this.updatePage} />
+        }
+        {/* TODO: Remove once UniverseCard is moved to modal */}
+        {testUniverseCard &&
+          <UniverseCard
+            universe={this.props.universe.id}
+          />
         }
         {page === SCRATCH && <Form {...this.props} updatePage={this.updatePage} />}
       </section>
