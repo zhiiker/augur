@@ -39,7 +39,7 @@ export class WebWorkerConnector extends Connectors.BaseConnector {
     this.worker.onmessage = (event: MessageEvent) => {
       try {
         const eventData: JsonRpcResponse = JSON.parse(event.data);
-console.log(eventData)
+
         // Handle response for outstanding request
         this.outstandingRequests.filter((r) => r.id === eventData.id).forEach((r) => {
           if (eventData.error) {
