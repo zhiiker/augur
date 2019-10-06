@@ -26,6 +26,7 @@ var args = options.parse(opts, process.argv, function (error) {
 var primaryFile = args.opt.primary;
 var secondaryFile = args.opt.secondary;
 var output = args.opt.output;
+if(!(fs.existsSync(primaryFile))) fs.writeFileSync(primaryFile, '{}');
 fs.readFile(primaryFile, fileType, function (err, primaryContent) {
   errorOccurred(err, opts);
   if (!primaryContent || primaryContent.length === 0) {

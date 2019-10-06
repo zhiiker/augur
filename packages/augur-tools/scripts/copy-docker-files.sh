@@ -5,7 +5,7 @@ IMAGE=$1
 TEMP1="./temp.file"
 ADD_TEMP2="./temp2.file"
 BLOCK_TEMP2=".temp3.file"
-ADDRESSES="../augur-artifacts/src/addresses.json"
+ADDRESSES="../augur-artifacts/src/local-addresses.json"
 BLOCKS="../augur-artifacts/src/upload-block-numbers.json"
 
 echo "processing $IMAGE $ADDRESSES"

@@ -66,10 +66,16 @@ export interface NetworkContractAddresses {
 
 export async function setAddresses(networkId: NetworkId, addresses: ContractAddresses): Promise<void> {
   const filepath = path.join(__dirname, "../src/addresses.json"); // be sure to be in src dir, not build
+  const localfilepath = path.join(__dirname, "../src/local-addresses.json"); // for docker images local env
 
   let contents = {};
   if (await exists(filepath)) {
     contents = JSON.parse(await readFile(filepath, "utf8"));
+  }
+
+  if (await exists(localfilepath)) {
+    const local = JSON.parse(await readFile(localfilepath, "utf8"));
+    contents = Object.assign(local, contents);
   }
 
   contents[networkId] = addresses;
