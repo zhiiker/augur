@@ -223,6 +223,13 @@ export default class ModalReporting extends Component<
         contributeToTentativeWinner = true;
       }
 
+      if (marketType === SCALAR) {
+        const selectedOutcome = disputeInfo.stakes.find(
+          s => s.outcome === selectedRadio.id
+        );
+        if (selectedOutcome && selectedOutcome.tentativeWinning) contributeToTentativeWinner = true
+      }
+
       contributeToTentativeWinner
         ? addRepToTentativeWinningOutcome(report)
         : contribute(report);
