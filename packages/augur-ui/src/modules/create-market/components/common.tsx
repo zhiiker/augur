@@ -460,6 +460,15 @@ export class NumberedList extends Component<
     isMin: this.props.initialList.length === this.props.minShown,
   };
 
+  UNSAFE_componentWillReceiveProps(nextProps) {
+    // todo: when we add user_outcome need to make it so only changed ones update
+    if (JSON.stringify(this.props.initialList) !== JSON.stringify(nextProps.initialList)) {
+      this.setState({
+        list: nextProps.initialList,
+      });
+    }
+  }
+
   onChange = (value, index) => {
     const { updateList } = this.props;
     const { list } = this.state;
@@ -598,16 +607,18 @@ interface InputFactoryProps {
   inputIndex: number;
   updateNewMarket: Function;
   template: Template;
+  newMarket: NewMarket;
 }
 
 export const InputFactory = (props: InputFactoryProps) => {
-  const { input, inputs, inputIndex, updateNewMarket, template } = props;
+  const { input, inputs, inputIndex, updateNewMarket, template, newMarket } = props;
+  const { outcomes } = newMarket;
   if (input.type === TemplateInputType.TEXT) {
     return (
       <TextInput
         placeholder={input.placeholder}
         onChange={value => {
-          const newInputs = inputs;
+          let newInputs = inputs;
           newInputs[inputIndex].userInput = value;
           updateNewMarket({
             template: {
@@ -624,9 +635,9 @@ export const InputFactory = (props: InputFactoryProps) => {
       <TextInput
         placeholder={input.placeholder}
         onChange={value => {
-          const newInputs = inputs;
+          let newInputs = inputs;
           newInputs[inputIndex].userInput = value;
-          const newOutcomes = outcomes;
+          let newOutcomes = outcomes;
           newOutcomes[inputIndex] = value;
           updateNewMarket({
             outcomes: newOutcomes,
@@ -710,6 +721,7 @@ export const QuestionBuilder = (props: QuestionBuilderProps) => {
                 inputIndex={inputIndex}
                 updateNewMarket={updateNewMarket}
                 template={template}
+                newMarket={newMarket}
               />;
             }
           }
@@ -746,7 +758,7 @@ export const QuestionBuilder = (props: QuestionBuilderProps) => {
                   };
                 } else if (input.type === TemplateInputType.USER_DESCRIPTION_OUTCOME) {
                   return {
-                    value: input.placeholder,
+                    value: input.userInput || input.placeholder,
                     editable: false
                   };
                 }
