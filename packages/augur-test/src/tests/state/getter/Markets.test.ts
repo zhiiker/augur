@@ -1,21 +1,24 @@
-import { API } from "@augurproject/sdk/build/state/getter/API";
+import { API } from '@augurproject/sdk/build/state/getter/API';
 import {
   GetMarketsSortBy,
   MarketInfo,
   MarketList,
   MarketOrderBook
-} from "@augurproject/sdk/build/state/getter/Markets";
-import { DB } from "@augurproject/sdk/build/state/db/DB";
-import { MarketReportingState } from "@augurproject/sdk/build/constants";
-import { makeDbMock, makeProvider } from "../../../libs";
-import { ACCOUNTS, ContractAPI, defaultSeedPath, fork, loadSeedFile } from "@augurproject/tools";
-import { NULL_ADDRESS, stringTo32ByteHex } from "../../../libs/Utils";
-import { BigNumber } from "bignumber.js";
-import { ORDER_TYPES, SECONDS_IN_A_DAY } from "@augurproject/sdk";
-import { getAddress } from "ethers/utils/address";
+} from '@augurproject/sdk/build/state/getter/Markets';
+import { DB } from '@augurproject/sdk/build/state/db/DB';
+import { MarketReportingState } from '@augurproject/sdk/build/constants';
+import { makeDbMock, makeProvider } from '../../../libs';
+import { ACCOUNTS, ContractAPI, defaultSeedPath, fork, loadSeedFile } from '@augurproject/tools';
+import { NULL_ADDRESS, stringTo32ByteHex } from '../../../libs/Utils';
+import { BigNumber } from 'bignumber.js';
+import { ORDER_TYPES, SECONDS_IN_A_DAY } from '@augurproject/sdk';
+import { getAddress } from 'ethers/utils/address';
 
-import * as _ from "lodash";
-import { TestEthersProvider } from "../../../libs/TestEthersProvider";
+import * as _ from 'lodash';
+import { TestEthersProvider } from '../../../libs/TestEthersProvider';
+import { Market } from '@augurproject/core/build/libraries/ContractInterfaces';
+import { MarketTypeName } from "@augurproject/sdk/build/state/logs/types";
+import { getPayoutNumerators, makeValidScalarOutcome } from "@augurproject/tools/build/flash/fork";
 
 const CHUNK_SIZE = 100000;
 
@@ -235,7 +238,7 @@ describe('State API :: Markets :: ', () => {
       isSortDescending: false,
     });
     expect(marketList.markets.length).toEqual(3);
-    let marketIds = _.map(marketList.markets, "id");
+    let marketIds = _.map(marketList.markets, 'id');
     expect(marketIds).toContain(categoricalMarket1.address);
     expect(marketIds).toContain(yesNoMarket1.address);
     expect(marketIds).toContain(yesNoMarket2.address);
@@ -313,7 +316,7 @@ describe('State API :: Markets :: ', () => {
 
     // Place orders Bidding on Invalid on some markets
     let numShares = new BigNumber(10**18);
-    let price = new BigNumber(50);
+    const price = new BigNumber(50);
     await john.placeOrder(
       yesNoMarket1.address,
       ORDER_TYPES.BID,
@@ -647,7 +650,7 @@ describe('State API :: Markets :: ', () => {
       userPortfolioAddress: getAddress(ACCOUNTS[2].publicKey),
     });
     expect(marketList.markets.length).toEqual(4);
-    let marketIds = _.map(marketList.markets, "id")
+    const marketIds = _.map(marketList.markets, 'id')
     expect(marketIds).toContain(categoricalMarket1.address);
     expect(marketIds).toContain(categoricalMarket2.address);
     expect(marketIds).toContain(yesNoMarket1.address);
@@ -2035,6 +2038,52 @@ describe('State API :: Markets :: ', () => {
       ],
     });
     expect(categories).toMatchObject([]);
+  });
+
+  test.only(':getMarkets : reporting', async () => {
+    const universe = john.augur.contracts.universe;
+    const actualDB = await db;
+
+    const marketContract: Market = john.augur.contracts.marketFromAddress(markets['yesNoMarket1']);
+
+    await actualDB.sync(john.augur, CHUNK_SIZE, 0);
+    let market: MarketInfo = (await api.route('getMarkets', {
+      universe: universe.address,
+    })).markets.filter((marketInfo) => marketInfo.id === marketContract.address)[0];
+    expect(market.reportingState).toEqual(MarketReportingState.PreReporting);
+
+    // Get past the market time, into when we can accept the initial report.
+    await john.setTimestamp(new BigNumber(market.endTime + 1));
+
+    await actualDB.sync(john.augur, CHUNK_SIZE, 0);
+    market = (await api.route('getMarkets', {
+      universe: universe.address,
+    })).markets.filter((marketInfo) => marketInfo.id === marketContract.address)[0];
+    expect(market.reportingState).toEqual(MarketReportingState.DesignatedReporting);
+
+    // Now go forward a day, into Open Reporting.
+    const currentTime = await john.getTimestamp();
+    await john.setTimestamp(currentTime.plus(1 * 60 * 60 * 25));
+
+    await actualDB.sync(john.augur, CHUNK_SIZE, 0);
+    market = (await api.route('getMarkets', {
+      universe: universe.address,
+    })).markets.filter((marketInfo) => marketInfo.id === marketContract.address)[0];
+    expect(market.reportingState).toEqual(MarketReportingState.OpenReporting);
+
+    const SOME_REP = new BigNumber(6e25);
+    await john.repFaucet(SOME_REP);
+
+    // Do the initial report, creating the first dispute window.
+    const payoutNumerators = getPayoutNumerators(market, 'invalid');
+    await john.doInitialReport(marketContract, payoutNumerators, '', SOME_REP.toString());
+
+    await actualDB.sync(john.augur, CHUNK_SIZE, 0);
+    market = (await api.route('getMarkets', {
+      universe: universe.address,
+    })).markets.filter((marketInfo) => marketInfo.id === marketContract.address)[0];
+    console.log(market);
+    expect(market.reportingState).toEqual(MarketReportingState.CrowdsourcingDispute);
   });
 
   test(':getCategoryStats', async () => {
