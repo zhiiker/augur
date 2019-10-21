@@ -36,45 +36,27 @@ export default class MarketOutcomesChartHighchart extends Component<
     scalarDenomination: '',
   };
 
-  ethLabel: null;
   container: any;
   chart: Highcharts.Chart;
 
   constructor(props) {
     super(props);
-    this.ethLabel = null;
     this.state = {
       containerHeight: 0,
       containerWidth: 0,
       options: {
-        title: {
-          text: '',
-          y: 5,
-        },
         lang: {
           noData: 'No Completed Trades',
+        },
+        title: {
+          text: '',
         },
         chart: {
           type: 'line',
           styledMode: false,
           animation: false,
           marginTop: 40,
-          events: {
-            load() {
-              // @ts-ignore
-              const { width } = this.renderer;
-              // @ts-ignore
-              this.ethLabel = this.renderer.label('DAI', width - 35, 0).add();
-            },
-            redraw() {
-              // @ts-ignore
-              const { width } = this.renderer;
-              // @ts-ignore
-              this.ethLabel.destroy();
-              // @ts-ignore
-              this.ethLabel = this.renderer.label('DAI', width - 35, 0).add();
-            },
-          },
+          marginRight: 45,
         },
         credits: {
           enabled: false,
@@ -91,7 +73,7 @@ export default class MarketOutcomesChartHighchart extends Component<
           },
           series: {
             marker: {
-              enabled: true,
+              enabled: false,
             },
           },
         },
@@ -103,6 +85,7 @@ export default class MarketOutcomesChartHighchart extends Component<
           showLastLabel: true,
           labels: {
             format: '{value:%b %d}',
+            style: { fontSize: '9px' },
           },
           crosshair: {
             snap: true,
@@ -120,13 +103,10 @@ export default class MarketOutcomesChartHighchart extends Component<
           showFirstLabel: true,
           showLastLabel: true,
           labels: {
-            format: '{value:.4f}',
-            style: Styles.MarketOutcomeChartsHighcharts__yLabels,
-            x: 0,
+            format: props.isScalar ? '{value:.4f}' : '${value:.2f}',
+            style: null,
+            x: 35,
             y: -2,
-          },
-          title: {
-            text: '',
           },
           height: '100%',
           resize: {
@@ -136,7 +116,7 @@ export default class MarketOutcomesChartHighchart extends Component<
             snap: true,
             label: {
               enabled: true,
-              format: "{value:.4f} <span class='eth-label'>DAI</span>",
+              format: props.isScalar ? '{value:.4f}' : '${value:.2f}',
             },
           },
         },
@@ -155,7 +135,6 @@ export default class MarketOutcomesChartHighchart extends Component<
       selectedOutcomeId,
       daysPassed,
     } = this.props;
-    const { containerHeight } = this.state;
     this.buidOptions(daysPassed, bucketedPriceTimeSeries, selectedOutcomeId);
   }
 
@@ -217,14 +196,10 @@ export default class MarketOutcomesChartHighchart extends Component<
     const mmSecondsInWeek = createBigNumber(7).times(mmSecondsInDay);
     let interval = daysPassed <= 7 ? mmSecondsInHour : mmSecondsInDay;
     interval = daysPassed >= 60 ? mmSecondsInWeek : interval;
-
     return {
-      tickInterval: useTickInterval ? interval.toNumber() : 0,
       labels: {
         format: interval.isEqualTo(mmSecondsInHour) ? hours : days,
-        style: {
-          color: '#ffffff', // remove this when adding custom css and turning on styleMode
-        },
+        style: null,
       },
       crosshair: {
         snap: true,
@@ -264,7 +239,6 @@ export default class MarketOutcomesChartHighchart extends Component<
       width: this.container.clientWidth,
     };
 
-
     const useArea =
       priceTimeSeries && Object.keys(priceTimeSeries).length === 1;
     const hasData =
@@ -276,7 +250,7 @@ export default class MarketOutcomesChartHighchart extends Component<
 
     const series = [];
     Object.keys(priceTimeSeries).forEach(id => {
-      series.push({
+      const baseSeriesOptions = {
         type: 'line',
         lineWidth:
           selectedOutcomeId && selectedOutcomeId === id
@@ -287,6 +261,31 @@ export default class MarketOutcomesChartHighchart extends Component<
           pts.timestamp,
           createBigNumber(pts.price).toNumber(),
         ]),
+      };
+
+      const events = {
+        mouseOver() {
+          if (this.type === 'line') {
+            this.update({ ...baseSeriesOptions, type: 'area' }, true);
+          }
+        },
+        mouseOut() {
+          this.update({ ...baseSeriesOptions }, true);
+        },
+        click() {
+          this.update(
+            {
+              ...baseSeriesOptions,
+              type: this.type === 'line' ? 'area' : 'line',
+            },
+            true
+          );
+        },
+      };
+
+      series.push({
+        ...baseSeriesOptions,
+        events: events,
       });
     });
 

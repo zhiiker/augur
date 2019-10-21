@@ -26,6 +26,7 @@ export enum SizeTypes {
 
 export interface Alert {
   id: string;
+  uniqueId: string;
   title: string;
   name: string;
   description: string;
@@ -130,6 +131,7 @@ export interface Universe extends Getters.Universe.UniverseDetails {
   disputeWindow: Getters.Universe.DisputeWindow;
   forkingInfo?: ForkingInfo;
   forkEndTime?: string;
+  timeframeData?: Getters.Platform.PlatformActivityStatsResult;
 }
 
 export interface UserReports {
@@ -507,10 +509,12 @@ export interface Blockchain {
 export interface AppStatus {
   isMobile?: boolean;
   isMobileSmall?: boolean;
+  isHelpMenuOpen: boolean;
 }
 
 export interface AuthStatus {
   isLogged?: boolean;
+  restoredAccount?: boolean;
   edgeLoading?: boolean;
   edgeContext?: string;
   isConnectionTrayOpen?: boolean;

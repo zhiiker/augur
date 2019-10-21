@@ -36,8 +36,9 @@ import {
   CHOICE,
   OPTIONAL,
 } from 'modules/create-market/get-template';
-import { CATEGORICAL } from 'modules/common/constants';
+import { CATEGORICAL, CATEGORICAL_OUTCOMES_MIN_NUM } from 'modules/common/constants';
 import { buildformattedDate } from 'utils/format-date';
+import MarkdownRenderer from 'modules/common/markdown-renderer';
 
 export interface HeaderProps {
   text: string;
@@ -70,6 +71,7 @@ export interface SubheadersProps {
   underline?: Boolean;
   ownLine?: Boolean;
   smallSubheader?: Boolean;
+  renderMarkdown?: Boolean;
 }
 
 export interface DateTimeHeadersProps extends SubheadersProps {
@@ -161,7 +163,10 @@ export const DateTimeHeaders = (props: DateTimeHeadersProps) => (
 export const SmallSubheaders = (props: SubheadersProps) => (
   <div className={Styles.SmallSubheaders}>
     <h1>{props.header}</h1>
-    <span>{props.subheader}</span>
+    {props.renderMarkdown &&
+      <MarkdownRenderer text={props.subheader}/>
+    }
+    {!props.renderMarkdown && <span>{props.subheader}</span>}
   </div>
 );
 
@@ -241,7 +246,7 @@ export const OutcomesList = (props: OutcomesListProps) => (
     <h1>Outcomes</h1>
     <div>
       {props.outcomes.map((outcome: string, index: Number) => (
-        <span key={index}>
+        <span key={String(index)}>
           {index + 1}. {outcome}
         </span>
       ))}
@@ -302,6 +307,53 @@ interface TimeSelectorParams {
   hour?: string;
   minute?: string;
   meridiem?: string;
+}
+
+interface DatePickerSelectorProps {
+  setEndTime?: number;
+  onChange: Function;
+  currentTimestamp: number;
+  errrorMessage?: string;
+  placeholder?: string;
+  errorMessage?: string;
+}
+
+export const DatePickerSelector = (props: DatePickerSelectorProps) => {
+    const {
+      setEndTime,
+      onChange,
+      currentTimestamp,
+      errorMessage,
+      placeholder
+    } = props;
+
+    const [dateFocused, setDateFocused] = useState(false);
+
+    return (
+      <DatePicker
+        date={setEndTime ? moment(setEndTime * 1000) : null}
+        placeholder={placeholder}
+        displayFormat="MMM D, YYYY"
+        id="input-date"
+        onDateChange={(date: Moment) => {
+          if (!date) return onChange('setEndTime', '');
+          onChange(date.startOf('day').unix());
+        }}
+        isOutsideRange={day =>
+          day.isAfter(moment(currentTimestamp * 1000).add(6, 'M')) ||
+          day.isBefore(moment(currentTimestamp * 1000))
+        }
+        numberOfMonths={1}
+        onFocusChange={({ focused }) => {
+          if (setEndTime === null) {
+            onChange(currentTimestamp);
+          }
+          setDateFocused(() => focused);
+        }}
+        focused={dateFocused}
+        errorMessage={errorMessage}
+      />
+    );
 }
 
 export const DateTimeSelector = (props: DateTimeSelectorProps) => {
@@ -555,7 +607,7 @@ export class NumberedList extends Component<
             number={index}
             removable={index >= minShown}
             onRemove={this.removeItem}
-            errorMessage={errorMessage[index]}
+            errorMessage={errorMessage && errorMessage[index]}
             editable={item.editable}
           />
         ))}
@@ -630,10 +682,11 @@ interface InputFactoryProps {
   inputIndex: number;
   onChange: Function;
   newMarket: NewMarket;
+  currentTimestamp: string;
 }
 
 export const InputFactory = (props: InputFactoryProps) => {
-  const { input, inputIndex, onChange, newMarket } = props;
+  const { input, inputIndex, onChange, newMarket, currentTimestamp } = props;
 
   const { template, outcomes, marketType, validations } = newMarket;
 
@@ -667,7 +720,7 @@ export const InputFactory = (props: InputFactoryProps) => {
     return (
       <TextInput
         placeholder={input.placeholder}
-        errorMessage={validations.inputs[inputIndex]}
+        errorMessage={validations.inputs && validations.inputs[inputIndex]}
         onChange={value => {
           let newOutcomes = outcomes;
           const newInputs = updateData(value);
@@ -685,7 +738,7 @@ export const InputFactory = (props: InputFactoryProps) => {
     return (
       <TextInput
         placeholder={input.placeholder}
-        errorMessage={validations.inputs[inputIndex]}
+        errorMessage={validations.inputs && validations.inputs[inputIndex]}
         onChange={value => {
           let newOutcomes = outcomes;
           newOutcomes[inputIndex] = value;
@@ -695,14 +748,27 @@ export const InputFactory = (props: InputFactoryProps) => {
         value={input.userInput}
       />
     );
+  } else if (input.type === TemplateInputType.DATEYEAR) {
+    return (
+      <DatePickerSelector
+        onChange={(value) => {
+          updateData(value);
+        }}
+        currentTimestamp={currentTimestamp}
+        placeholder={input.placeholder}
+        setEndTime={input.userInput}
+        errorMessage={validations.inputs && validations.inputs[inputIndex]}
+      />
+    );
   } else if (input.type === TemplateInputType.DATETIME) {
     return <span>{input.userInput ? input.userInput : `[${input.placeholder}]`}</span>;
   } else if (input.type === TemplateInputType.DROPDOWN || input.type === TemplateInputType.DENOMINATION_DROPDOWN) {
     return (
       <FormDropdown
         options={input.values}
+        defaultValue={input.userInput}
         staticLabel={input.placeholder}
-        errorMessage={validations.inputs[inputIndex]}
+        errorMessage={validations.inputs && validations.inputs[inputIndex]}
         onChange={value => {
           if (input.type === TemplateInputType.DENOMINATION_DROPDOWN) {
             onChange('scalarDenomination', value);
@@ -853,7 +919,7 @@ export const EstimatedStartSelector = (props: EstimatedStartSelectorProps) => {
               break;
           }
         }}
-        validations={newMarket.validations.inputs[inputIndex]}
+        validations={newMarket.validations.inputs && newMarket.validations.inputs[inputIndex]}
         hour={hour ? String(hour) : null}
         minute={minute ? String(minute) : null}
         meridiem={meridiem}
@@ -873,7 +939,7 @@ export interface QuestionBuilderProps {
 }
 
 export const QuestionBuilder = (props: QuestionBuilderProps) => {
-  const { onChange, newMarket } = props;
+  const { onChange, newMarket, currentTimestamp } = props;
   const { template, outcomes, marketType, validations } = newMarket;
   const question = template.question.split(' ');
   const inputs = template.inputs;
@@ -889,12 +955,12 @@ export const QuestionBuilder = (props: QuestionBuilderProps) => {
         subheader="What do you want people to predict?"
       />
       <div>
-        {question.map(word => {
+        {question.map((word, index) => {
           const bracketPos = word.indexOf('[');
           const bracketPos2 = word.indexOf(']');
 
           if (bracketPos === -1 || bracketPos === -1) {
-            return <span key={word.id}>{word}</span>;
+            return <span key={word+index}>{word}</span>;
           } else {
             const id = word.substring(bracketPos + 1, bracketPos2);
             const inputIndex = inputs.findIndex(
@@ -909,6 +975,7 @@ export const QuestionBuilder = (props: QuestionBuilderProps) => {
                   inputIndex={inputIndex}
                   onChange={onChange}
                   newMarket={newMarket}
+                  currentTimestamp={currentTimestamp}
                 />
               );
             }
@@ -920,7 +987,7 @@ export const QuestionBuilder = (props: QuestionBuilderProps) => {
           newMarket={newMarket}
           onChange={onChange}
           input={inputs[dateTimeIndex]}
-          currentTime={props.currentTime}
+          currentTime={currentTimestamp}
           template={template}
           inputIndex={dateTimeIndex}
         />
@@ -968,8 +1035,17 @@ export const CategoricalTemplate = (props: CategoricalTemplateProps) => {
       }
       return null;
     });
+  
+  outcomes.forEach(outcome => {
+    if (initialList.filter(option => option.value === outcome).length === 0) {
+      initialList.push({
+        value: outcome,
+        editable: true
+      });
+    }
+  });
 
-  while (initialList.length < 2) {
+  while (initialList.length < CATEGORICAL_OUTCOMES_MIN_NUM) {
     initialList.push({
       value: '',
       editable: true,

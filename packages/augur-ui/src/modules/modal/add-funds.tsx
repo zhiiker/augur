@@ -92,6 +92,7 @@ export const AddFunds = ({
 
   return (
     <div
+      onClick={event => event.stopPropagation()}
       className={classNames(Styles.AddFunds, {
         [Styles.ShowSelected]: selectedOption,
         [Styles.hideOnMobile]: autoSelect,
@@ -121,7 +122,7 @@ export const AddFunds = ({
           <BackButton action={() => setSelectedOption(() => null)} />
           <CloseButton action={() => closeAction()} />
         </div>
-        <div>
+        <div className={selectedOption === '2' ? Styles.AddFundsTransfer : Styles.AddFundsCreditDebitCoinbase}>
           {selectedOption === '0' && (
             <>
               <h1>Credit/debit card</h1>
