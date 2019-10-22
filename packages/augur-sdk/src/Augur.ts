@@ -128,7 +128,7 @@ export class Augur<TProvider extends Provider = Provider> {
     );
     connector.client = client;
     if(zeroX) zeroX.client = client;
-    await client.contracts.setReputationToken(networkId);
+    await client.contracts.setReputationToken(networkId)
     return client;
   }
 
