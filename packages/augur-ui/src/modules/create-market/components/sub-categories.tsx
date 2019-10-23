@@ -33,7 +33,7 @@ export const SubCategories = ({
     },
     categoryStats
   );
-  if (cats.length === 0) nextPage();
+
   return (
     <section className={Styles.SubCategories}>
       <LargeSubheaders
