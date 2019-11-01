@@ -23,12 +23,14 @@ const mapStateToProps = (state, ownProps) => {
   const market = ownProps.market || selectMarket(marketId);
 
   const marketReviewSeen =
-    windowRef &&
+   tradingTutorial ||
+    (windowRef &&
     windowRef.localStorage &&
-    Boolean(windowRef.localStorage.getItem(MARKET_REVIEW_SEEN));
+    Boolean(windowRef.localStorage.getItem(MARKET_REVIEW_SEEN)));
 
-  if (market === null) {
+  if (market === null || !connection.isConnected) {
     return {
+      tradingTutorial,
       isMarketLoading: true,
       isConnected: connection.isConnected && universe.id != null,
       canHotload: connection.canHotload,
