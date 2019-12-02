@@ -32,6 +32,7 @@
     "docker:gnosis": "yarn workspace @augurproject/gnosis-relay-api run-relay",
     "sdk": "yarn workspace @augurproject/sdk",
     "tools": "yarn workspace @augurproject/tools",
+    "ui": "yarn workspace @augurproject/ui",
     "an": "yarn workspace @augurproject/node",
     "flash": "yarn workspace @augurproject/tools flash",
     "check": "gts check",
