@@ -201,8 +201,8 @@ export interface ExtraInfo {
 
 export const ValidationTemplateInputType = {
   [TemplateInputType.TEXT]: `(.*)`,
-  [ValidationType.WHOLE_NUMBER]: `[0-9]*`,
-  [ValidationType.NUMBER]: `[0-9]+\.*[0-9]*`,
+  [ValidationType.WHOLE_NUMBER]: `\d+`,
+  [ValidationType.NUMBER]: `\d+(\.\d+)*`,
   [TemplateInputType.USER_DESCRIPTION_OUTCOME]: `(.*)`,
   [TemplateInputType.SUBSTITUTE_USER_OUTCOME]: `[0-9]*`,
   [TemplateInputType.DATETIME]: `(January|February|March|April|May|June|July|August|September|October|November|December) ([0-9]){2}, 20|([0-9]{2}) \d\d:\d\d (AM|PM) \\(UTC 0\\)`,

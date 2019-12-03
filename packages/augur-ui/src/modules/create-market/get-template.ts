@@ -218,6 +218,7 @@ const getTemplatesByMarketType = (
   marketType
 ) => {
   const values = categoryTemplates.filter(t => t.marketType === marketType);
+  // TODO filter out retired templates
   return deepClone<Template[]>(values);
 };
 
