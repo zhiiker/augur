@@ -11,3 +11,5 @@ export const MIGRATE_REP = 'migrate-rep';
 export const LANDING_PAGE = 'explore';
 
 export const DEFAULT_VIEW = MARKETS;
+
+export const FULL_REFRESH = 'FULL_REFRESH';

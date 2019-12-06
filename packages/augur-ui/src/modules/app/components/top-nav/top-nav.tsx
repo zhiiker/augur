@@ -11,6 +11,9 @@ import { GlobalChat } from 'modules/global-chat/components/global-chat';
 import Styles from 'modules/app/components/top-nav/top-nav.styles.less';
 import { NavMenuItem } from 'modules/types';
 import { helpIcon } from 'modules/common/icons';
+import {
+  FULL_REFRESH
+} from 'modules/routes/constants/views';
 
 interface TopNavProps {
   isLogged: boolean;
@@ -42,10 +45,12 @@ const TopNav = ({
       <ul>
         {accessFilteredMenu.map(item => {
           const selected = isCurrentItem(item);
+          let path = {pathname: makePath(item.route)};
+          if (selected) path.state = {[FULL_REFRESH]: true};
           if (item.title === 'Create') {
             return (
               <div className={Styles.CreateButton} key={item.title}>
-                <Link to={item.route ? makePath(item.route) : null}>
+                <Link to={item.route ? path : null}>
                   <SecondaryButton
                     disabled={isDisabled}
                     text={'Create Market'}

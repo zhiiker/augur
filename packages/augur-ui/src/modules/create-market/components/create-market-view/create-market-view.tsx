@@ -42,8 +42,7 @@ export default class CreateMarketView extends React.Component<
   CreateMarketViewState
 > {
   state: CreateMarketViewState = {
-    page: this.props.history.location.state || LANDING,
-
+    page: this.props.history.location.state && this.props.history.location.state.type || LANDING,
   };
 
   updatePage = (page: string) => {
@@ -65,8 +64,8 @@ export default class CreateMarketView extends React.Component<
         {page === LANDING &&
           <Landing categoryStats={categoryStats} updatePage={this.updatePage} />
         }
-        {page === TEMPLATE && <Form {...this.props} isTemplate updatePage={this.updatePage} categoryStats={categoryStats} />}
-        {page === SCRATCH && <Form {...this.props} updatePage={this.updatePage} />}
+        {page === TEMPLATE && <Form {...this.props} page={page} isTemplate updatePage={this.updatePage} categoryStats={categoryStats} />}
+        {page === SCRATCH && <Form {...this.props} page={page} updatePage={this.updatePage} />}
       </section>
     );
   }

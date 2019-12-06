@@ -75,6 +75,7 @@ import {
 } from 'modules/common/validations';
 import { buildformattedDate } from 'utils/format-date';
 import TemplatePicker from 'modules/create-market/containers/template-picker';
+import { FULL_REFRESH } from 'modules/routes/constants/views';
 
 import Styles from 'modules/create-market/components/form.styles.less';
 
@@ -148,6 +149,7 @@ interface Validations {
   checkUserInputFilled?: Boolean;
   checkFee?: Boolean;
   checkForAddress?: Boolean;
+  isRefreshed: Boolean;
 }
 
 const draftError = 'ENTER A MARKET QUESTION';
@@ -155,6 +157,7 @@ const draftError = 'ENTER A MARKET QUESTION';
 export default class Form extends React.Component<FormProps, FormState> {
   state: FormState = {
     blockShown: false,
+    isRefreshed: false,
     templateFormStarts: hasNoTemplateCategoryChildren(
       this.props.newMarket.categories[0]
     )
@@ -175,6 +178,23 @@ export default class Form extends React.Component<FormProps, FormState> {
 
   componentWillUnmount() {
     if (!this.state.blockShown) this.unblock();
+  }
+
+  componentDidUpdate() {
+    if (this.props.location.state && this.props.location.state[FULL_REFRESH] && this.props.page !== LANDING) {
+      this.unblock((goBack: Boolean) => {
+        if (goBack) {
+          this.setState({ blockShown: true }, () => {
+            this.props.updatePage(LANDING);
+            this.props.history.push({
+              pathname: makePath(CREATE_MARKET, null),
+              state: {type: LANDING, FULL_REFRESH: false},
+            });
+            this.props.clearNewMarket();
+          });
+        }
+      });
+    }
   }
 
   unblock = (cb?: Function) => {
@@ -226,7 +246,7 @@ export default class Form extends React.Component<FormProps, FormState> {
         if (!close) {
           this.props.history.push({
             pathname: makePath(CREATE_MARKET, null),
-            state: isTemplate ? TEMPLATE : SCRATCH,
+            state: {type: isTemplate ? TEMPLATE : SCRATCH},
           });
           cb && cb(false);
         } else {
@@ -261,7 +281,10 @@ export default class Form extends React.Component<FormProps, FormState> {
                 hasNoTemplateCategoryChildren(newMarket.categories[0])
                   ? ''
                   : newMarket.categories[1],
-                hasNoTemplateCategoryTertiaryChildren(newMarket.categories[0], newMarket.categories[1])
+                hasNoTemplateCategoryTertiaryChildren(
+                  newMarket.categories[0],
+                  newMarket.categories[1]
+                )
                   ? ''
                   : newMarket.categories[2],
               ];
@@ -291,7 +314,12 @@ export default class Form extends React.Component<FormProps, FormState> {
   };
 
   nextPage = () => {
-    const { newMarket, updateNewMarket, isTemplate, marketCreationStarted } = this.props;
+    const {
+      newMarket,
+      updateNewMarket,
+      isTemplate,
+      marketCreationStarted,
+    } = this.props;
     const { currentStep, marketType, template } = newMarket;
 
     const { contentPages } = this.state;
@@ -307,7 +335,7 @@ export default class Form extends React.Component<FormProps, FormState> {
     if (isTemplate && template && mainContent === TEMPLATE_PICKER) {
       marketCreationStarted(template.question, true);
     }
-    
+
     this.node && this.node.scrollIntoView();
   };
 
@@ -374,7 +402,7 @@ export default class Form extends React.Component<FormProps, FormState> {
       drafts,
       updateDraft,
       isTemplate,
-      marketCreationSaved
+      marketCreationSaved,
     } = this.props;
 
     if (newMarket.description === EMPTY_STATE.description) {
@@ -416,7 +444,10 @@ export default class Form extends React.Component<FormProps, FormState> {
       });
     }
 
-    marketCreationSaved(newMarket.template && newMarket.template.name, isTemplate);
+    marketCreationSaved(
+      newMarket.template && newMarket.template.name,
+      isTemplate
+    );
   };
 
   evaluate = (validationsObj: Validations) => {
@@ -473,7 +504,9 @@ export default class Form extends React.Component<FormProps, FormState> {
       checkPositive ? isPositive(value) : '',
       checkDecimals ? moreThanDecimals(value, decimals) : '',
       checkForAddress ? checkAddress(value) : '',
-      checkUserInputFilled ? checkForUserInputFilled(value, newMarket.endTimeFormatted) : '',
+      checkUserInputFilled
+        ? checkForUserInputFilled(value, newMarket.endTimeFormatted)
+        : '',
     ];
 
     if (label === END_TIME) {
@@ -671,7 +704,7 @@ export default class Form extends React.Component<FormProps, FormState> {
       noDarkBackground,
       previewButton,
       disabledFunction,
-      useBullets
+      useBullets,
     } = contentPages[currentStep];
 
     let savedDraft = drafts[uniqueId];
@@ -719,11 +752,11 @@ export default class Form extends React.Component<FormProps, FormState> {
             <span>Your market preview</span>
             <PrimaryButton text="Close preview" action={this.preview} />
             <MarketView
-                sortedOutcomes={selectSortedMarketOutcomes(
-                  newMarket.marketType,
-                  newMarket.outcomesFormatted
-                )}
-                market={{
+              sortedOutcomes={selectSortedMarketOutcomes(
+                newMarket.marketType,
+                newMarket.outcomesFormatted
+              )}
+              market={{
                 ...newMarket,
                 maxPriceBigNumber: createBigNumber(newMarket.maxPrice),
                 minPriceBigNumber: createBigNumber(newMarket.minPrice),
