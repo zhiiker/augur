@@ -81,6 +81,7 @@
       "connectionTimeout": 60000
     },
     "gnosis-relay": "https://gnosis.kovan.augur.net/api/",
+    "0x-eth-node": "https://eth-kovan.alchemyapi.io/jsonrpc/wk8iQPITIJU1L28NfAyVETjeiCwjBvNB",
     "universe": null,
     "debug": {
       "connect": true,

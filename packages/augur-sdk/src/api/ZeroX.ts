@@ -261,6 +261,7 @@ export class ZeroX {
       new BigNumber(params.outcome),
       params.kycToken,
       params.expirationTime,
+      // @ts-ignore
       this.augur.addresses.Exchange,
       salt
     );
@@ -333,6 +334,7 @@ export class ZeroX {
   }
 
   async addOrder(order) {
+    console.log('ZeroX::addOrder', order);
     if (this.browserMesh) {
       return this.browserMesh.addOrdersAsync([order]);
     } else {

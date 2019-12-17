@@ -9,6 +9,7 @@ import { ThunkDispatch } from "redux-thunk";
 import { Action } from "redux";
 import { placeTrade, approveToTrade } from "modules/contracts/actions/contractCalls";
 import { Getters } from "@augurproject/sdk";
+import { formatBytes32String } from 'ethers/utils';
 
 export const placeMarketTrade = ({
   marketId,
@@ -35,8 +36,9 @@ export const placeMarketTrade = ({
   const displayAmount = tradeInProgress.numShares;
   const orderType = tradeInProgress.side === BUY ? 0 : 1;
 
-  const fingerprint = undefined; // TODO: get this from state
-  const kycToken = undefined; // TODO: figure out how kyc tokens are going to be handled
+  const fingerprint = formatBytes32String('11'); // TODO: get this from state
+  const kycToken = '0x000000000000000000000000000000000000000C'; // TODO: figure out how kyc tokens are going to be handled
+  const expirationDate = 0; // TODO get from Trade Wrapper
 
   placeTrade(
     orderType,
@@ -51,7 +53,11 @@ export const placeMarketTrade = ({
     market.maxPrice,
     displayAmount,
     displayPrice,
-    userShares
+    userShares,
+    expirationDate,
   ).then(() => callback(null, null))
-    .catch((err) => callback(err, null));
+    .catch((err) => {
+      console.log('error', err);
+      callback(err, null)
+    });
 };
