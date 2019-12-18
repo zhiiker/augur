@@ -233,7 +233,7 @@ export class FlashSession {
       listenForEvent: () => {},
       startBlockStreamListener: () => {},
     } as unknown as BlockAndLogStreamerListenerInterface;
-
+    console.log('createAndInitializeDB is called flash makeDB');
     return DB.createAndInitializeDB(
       Number(this.user.augur.networkId),
       0,

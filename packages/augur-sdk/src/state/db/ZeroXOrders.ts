@@ -77,6 +77,7 @@ export class ZeroXOrders extends AbstractTable {
   }
 
   static async create(db: DB, networkId: number, augur: Augur): Promise<ZeroXOrders> {
+    console.log('create zeroXOrders class')
     const zeroXOrders = new ZeroXOrders(db, networkId, augur);
     await zeroXOrders.clearDB();
     await zeroXOrders.subscribeToMeshEvents();
@@ -84,13 +85,16 @@ export class ZeroXOrders extends AbstractTable {
   }
 
   async subscribeToMeshEvents(): Promise<void> {
+    console.log('subscribeToMeshEvents')
     return this.augur.zeroX.subscribeToMeshEvents(this.handleMeshEvent.bind(this));
   }
 
   async handleMeshEvent(orderEvents: OrderEvent[]): Promise<void> {
+    console.log('handle Mesh Event', orderEvents.map(e => e.orderHash));
     const filteredOrders = _.filter(orderEvents, this.validateOrder.bind(this));
     let documents = _.map(filteredOrders, this.processOrder.bind(this));
     documents = _.filter(documents, this.validateStoredOrder.bind(this));
+    console.log('documents created ', documents.length);
     await this.bulkUpsertDocuments(documents);
     this.augur.getAugurEventEmitter().emit('ZeroXOrders', documents);
   }

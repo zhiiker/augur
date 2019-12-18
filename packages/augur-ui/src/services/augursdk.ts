@@ -73,11 +73,12 @@ export class SDK {
     const enableFlexSearch = false; // TODO configurable
     const meshClient = env['0x-endpoint'] ? new WSClient(env['0x-endpoint']) : undefined;
 
-    const meshBrowser = !isLocalHost() ? new Mesh({
-      ethereumRPCURL,
+    const meshBrowser = new Mesh({
+      ethereumRPCURL: 'ws://localhost:60557',
       ethereumChainID: Number(this.networkId),
-    }) : undefined;
+    });
 
+    console.log('meshBrowser', !!meshBrowser);
     this.sdk = await Augur.create<Provider>(
       ethersProvider,
       contractDependencies,

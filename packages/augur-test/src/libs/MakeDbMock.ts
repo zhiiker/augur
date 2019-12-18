@@ -49,6 +49,7 @@ export function makeDbMock(prefix:string = uuid.v4()) {
     wipeDB,
     constants,
     makeDB: (augur: Augur, accounts: Account[]) => {
+      console.log('createAndInitializeDB is called make db mock');
       const db = DB.createAndInitializeDB(
         constants.networkId,
         constants.blockstreamDelay,

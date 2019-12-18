@@ -127,9 +127,10 @@ export class DB {
     const dbName = `augur-${networkId}`;
     const dbController = new DB(new Dexie(dbName));
 
+    console.log('augur.zeroX in createAndInitializeDB', !!augur.zeroX);
     dbController.augur = augur;
-
-    return dbController.initializeDB(networkId, blockstreamDelay, defaultStartSyncBlockNumber, blockAndLogStreamerListener);
+    console.log('augur.zeroX in createAndInitializeDB', !!augur.zeroX);
+    return dbController.initializeDB(dbController, networkId, blockstreamDelay, defaultStartSyncBlockNumber, blockAndLogStreamerListener);
   }
 
   /**
@@ -144,43 +145,44 @@ export class DB {
    * @param blockAndLogStreamerListener
    * @return {Promise<void>}
    */
-  async initializeDB(networkId: number, blockstreamDelay: number, defaultStartSyncBlockNumber: number, blockAndLogStreamerListener: BlockAndLogStreamerListenerInterface): Promise<DB> {
-    this.networkId = networkId;
-    this.blockstreamDelay = blockstreamDelay;
-    this.blockAndLogStreamerListener = blockAndLogStreamerListener;
+  async initializeDB(controller: DB, networkId: number, blockstreamDelay: number, defaultStartSyncBlockNumber: number, blockAndLogStreamerListener: BlockAndLogStreamerListenerInterface): Promise<DB> {
+    controller.networkId = networkId;
+    controller.blockstreamDelay = blockstreamDelay;
+    controller.blockAndLogStreamerListener = blockAndLogStreamerListener;
 
-    const schemas = this.generateSchemas();
+    const schemas = controller.generateSchemas();
 
-    this.dexieDB.version(1).stores(schemas);
+    controller.dexieDB.version(1).stores(schemas);
 
-    await this.dexieDB.open();
+    await controller.dexieDB.open();
 
-    this.syncStatus = new SyncStatus(networkId, defaultStartSyncBlockNumber, this);
+    controller.syncStatus = new SyncStatus(networkId, defaultStartSyncBlockNumber, controller);
 
     // Create SyncableDBs for generic event types & UserSyncableDBs for user-specific event types
-    for (const genericEventDBDescription of this.genericEventDBDescriptions) {
-      new SyncableDB(this.augur, this, networkId, genericEventDBDescription.EventName, genericEventDBDescription.EventName, genericEventDBDescription.indexes);
+    for (const genericEventDBDescription of controller.genericEventDBDescriptions) {
+      new SyncableDB(controller.augur, controller, networkId, genericEventDBDescription.EventName, genericEventDBDescription.EventName, genericEventDBDescription.indexes);
     }
 
     // TODO this.liquidityDatabase = new LiquidityDB(this.augur, this, networkId, 'Liquidity');
 
     // Custom Derived DBs here
-    this.disputeDatabase = new DisputeDatabase(this, networkId, 'Dispute', ['InitialReportSubmitted', 'DisputeCrowdsourcerCreated', 'DisputeCrowdsourcerContribution', 'DisputeCrowdsourcerCompleted'], this.augur);
-    this.currentOrdersDatabase = new CurrentOrdersDatabase(this, networkId, 'CurrentOrders', ['OrderEvent'], this.augur);
-    this.marketDatabase = new MarketDB(this, networkId, this.augur);
+    controller.disputeDatabase = new DisputeDatabase(controller, networkId, 'Dispute', ['InitialReportSubmitted', 'DisputeCrowdsourcerCreated', 'DisputeCrowdsourcerContribution', 'DisputeCrowdsourcerCompleted'], this.augur);
+    controller.currentOrdersDatabase = new CurrentOrdersDatabase(controller, networkId, 'CurrentOrders', ['OrderEvent'], controller.augur);
+    controller.marketDatabase = new MarketDB(controller, networkId, controller.augur);
 
     // Zero X Orders. Only on if a mesh client has been provided
-    this.zeroXOrders = this.augur.zeroX ? await ZeroXOrders.create(this, networkId, this.augur): undefined;
+    console.log('this.augur.zeroX in DB.ts', !!controller.augur.zeroX);
+    controller.zeroXOrders = controller.augur.zeroX ? await ZeroXOrders.create(controller, networkId, controller.augur): undefined;
 
     // Always start syncing from 10 blocks behind the lowest
     // last-synced block (in case of restarting after a crash)
-    const startSyncBlockNumber = await this.getSyncStartingBlock();
-    if (startSyncBlockNumber > this.syncStatus.defaultStartSyncBlockNumber) {
+    const startSyncBlockNumber = await controller.getSyncStartingBlock();
+    if (startSyncBlockNumber > controller.syncStatus.defaultStartSyncBlockNumber) {
       console.log('Performing rollback of block ' + startSyncBlockNumber + ' onward');
-      await this.rollback(startSyncBlockNumber);
+      await controller.rollback(startSyncBlockNumber);
     }
 
-    return this;
+    return controller;
   }
 
   generateSchemas() : Schemas {
