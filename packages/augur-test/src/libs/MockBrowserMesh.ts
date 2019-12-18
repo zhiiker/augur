@@ -1,7 +1,31 @@
 import { OrderInfo, WSClient, OrderEvent, ValidationResults, AcceptedOrderInfo } from '@0x/mesh-rpc-client';
-import { SignedOrder } from '@0x/types';
 import { orderHashUtils } from '@0x/order-utils';
 import * as _ from 'lodash';
+import BigNumber from 'bignumber.js';
+
+
+export interface Order {
+  chainId: number;
+  exchangeAddress: string;
+  makerAddress: string;
+  takerAddress: string;
+  feeRecipientAddress: string;
+  senderAddress: string;
+  makerAssetAmount: BigNumber;
+  takerAssetAmount: BigNumber;
+  makerFee: BigNumber;
+  takerFee: BigNumber;
+  expirationTimeSeconds: BigNumber;
+  salt: BigNumber;
+  makerAssetData: string;
+  takerAssetData: string;
+  makerFeeAssetData: string;
+  takerFeeAssetData: string;
+}
+
+export interface SignedOrder extends Order {
+  signature: string;
+}
 
 export class MockBrowserMesh {
     readonly meshClient: WSClient;
