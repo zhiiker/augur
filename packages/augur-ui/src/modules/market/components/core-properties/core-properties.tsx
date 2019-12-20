@@ -37,8 +37,8 @@ const CoreProperties: React.FC<CorePropertiesProps> = ({ market, reportingBarSho
             label="Total Volume"
             value={
               (market.volumeFormatted
-                ? market.volumeFormatted.formatted
-                : formatDai(0).formatted) + ' DAI'
+                ? market.volumeFormatted.full
+                : formatDai(0).full)
             }
           />
           {reportingBarShowing && (
@@ -60,8 +60,8 @@ const CoreProperties: React.FC<CorePropertiesProps> = ({ market, reportingBarSho
                 label="Total Dispute Stake"
                 value={
                   (market.disputeInfo
-                    ? formatAttoRep(market.disputeInfo.stakeCompletedTotal).formatted
-                    : formatRep(0).formatted) + ' REP'
+                    ? formatAttoRep(market.disputeInfo.stakeCompletedTotal).full
+                    : formatRep(0).full)
                 }
               />
               <TimeLabel
@@ -76,16 +76,16 @@ const CoreProperties: React.FC<CorePropertiesProps> = ({ market, reportingBarSho
                 label="Open Interest"
                 value={
                   (market.openInterestFormatted
-                    ? market.openInterestFormatted.formatted
-                    : formatDai(0).formatted) + ' DAI'
+                    ? market.openInterestFormatted.full
+                    : formatDai(0).full)
                 }
               />
               <PropertyLabel
                 label="24hr Volume"
                 value={
                   (market.volumeFormatted
-                    ? market.volumeFormatted.formatted
-                    : formatDai(0).formatted) + ' DAI'
+                    ? market.volumeFormatted.full
+                    : formatDai(0).full)
                 }
               />
               <PropertyLabel
@@ -102,10 +102,10 @@ const CoreProperties: React.FC<CorePropertiesProps> = ({ market, reportingBarSho
                       The trading settlement fee is a combination of the Market
                       Creator Fee (
                       <b>
-                        {getValue(market, 'marketCreatorFeeRatePercent.full')}
+                        {formatPercent(Number(market.marketCreatorFeeRate) * 100).full}
                       </b>
                       ) and the Reporting Fee (
-                      <b>{getValue(market, 'reportingFeeRatePercent.full')}</b>)
+                      <b>{formatPercent(Number(market.reportingFeeRate) * 100).full}</b>)
                     </p>
                   </>
                 }
@@ -118,11 +118,11 @@ const CoreProperties: React.FC<CorePropertiesProps> = ({ market, reportingBarSho
             <TimeLabel
               label="Date Created"
               time={market.creationTimeFormatted}
-              showLocal
             />
             <TimeLabel
               label="Event Expiration"
               time={market.endTimeFormatted}
+              showLocal
               hint={
                 <>
                   <h4>{EVENT_EXPIRATION_TOOLTIP.header}</h4>

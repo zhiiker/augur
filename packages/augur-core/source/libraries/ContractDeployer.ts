@@ -35,7 +35,7 @@ import { Contracts, ContractData } from './Contracts';
 import { Dependencies } from '../libraries/GenericContractInterfaces';
 import { ContractAddresses, NetworkId, setAddresses, setUploadBlockNumber } from '@augurproject/artifacts';
 
-const TRADING_CONTRACTS = ['CreateOrder','FillOrder','CancelOrder','Trade','Orders','ZeroXTrade','ProfitLoss','SimulateTrade']
+const TRADING_CONTRACTS = ['CreateOrder','FillOrder','CancelOrder','Trade','Orders','ZeroXTrade','ProfitLoss','SimulateTrade','ZeroXExchange']
 
 export class ContractDeployer {
     private readonly configuration: DeployerConfiguration;
@@ -82,7 +82,8 @@ Deploying to: ${networkConfiguration.networkName}
         const externalAddresses = this.configuration.externalAddresses;
 
         // Legacy REP
-        if (externalAddresses.LegacyReputationToken) {
+        if (this.configuration.isProduction || externalAddresses.LegacyReputationToken) {
+            if (!externalAddresses.LegacyReputationToken) throw new Error('Must provide LegacyReputationToken');
             console.log(`Registering Legacy Rep Contract at ${externalAddresses.LegacyReputationToken}`);
             await this.augur!.registerContract(stringTo32ByteHex('LegacyReputationToken'), externalAddresses.LegacyReputationToken);
         } else {
@@ -90,7 +91,8 @@ Deploying to: ${networkConfiguration.networkName}
         }
 
         // REP price oracle
-        if (externalAddresses.RepPriceOracle) {
+        if (this.configuration.isProduction || externalAddresses.RepPriceOracle) {
+            if (!externalAddresses.RepPriceOracle) throw new Error('Must provide RepPriceOracle');
             console.log(`Registering Rep Price Oracle Contract at ${externalAddresses.RepPriceOracle}`);
             await this.augur!.registerContract(stringTo32ByteHex('RepPriceOracle'), externalAddresses.RepPriceOracle);
         } else {
@@ -98,8 +100,12 @@ Deploying to: ${networkConfiguration.networkName}
         }
 
         // Cash
-        if (externalAddresses.Cash) {
-            if (!(externalAddresses.DaiVat && externalAddresses.DaiPot && externalAddresses.DaiJoin)) {
+        if (this.configuration.isProduction
+            || externalAddresses.Cash
+            || externalAddresses.DaiVat
+            || externalAddresses.DaiPot
+            || externalAddresses.DaiJoin) {
+            if (!(externalAddresses.Cash && externalAddresses.DaiVat && externalAddresses.DaiPot && externalAddresses.DaiJoin)) {
                 throw new Error('Must provide ALL Maker contracts if any are provided');
             }
 
@@ -143,8 +149,8 @@ Deploying to: ${networkConfiguration.networkName}
         }
 
         // Proxy Factory & Gnosis Safe
-        if (externalAddresses.ProxyFactory) {
-            if (!externalAddresses.ProxyFactory) {
+        if (this.configuration.isProduction || externalAddresses.GnosisSafe || externalAddresses.ProxyFactory) {
+            if (!(externalAddresses.ProxyFactory && externalAddresses.GnosisSafe)) {
                 throw new Error('Must provide ALL Gnosis contracts if any are provided');
             }
 
@@ -156,15 +162,17 @@ Deploying to: ${networkConfiguration.networkName}
         }
 
         // 0x Exchange
-        if (externalAddresses.ZeroXExchange) {
+        if (this.configuration.isProduction || externalAddresses.ZeroXExchange) {
+            if (!externalAddresses.ZeroXExchange) throw new Error('Must provide ZeroXExchange');
             console.log(`Registering 0x Exchange Contract at ${externalAddresses.ZeroXExchange}`);
-            await this.augur!.registerContract(stringTo32ByteHex('ZeroXExchange'), externalAddresses.ZeroXExchange);
+            await this.augurTrading!.registerContract(stringTo32ByteHex('ZeroXExchange'), externalAddresses.ZeroXExchange);
         } else {
             await this.upload0xContracts();
         }
 
         // Uniswap
-        if (externalAddresses.UniswapV2Factory) {
+        if (this.configuration.isProduction || externalAddresses.UniswapV2Factory) {
+            if (!externalAddresses.UniswapV2Factory) throw new Error('Must provide UniswapV2Factory');
             console.log(`Registering UniswapV2Factory Contract at ${externalAddresses.UniswapV2Factory}`);
             await this.augur!.registerContract(stringTo32ByteHex('UniswapV2Factory'), externalAddresses.UniswapV2Factory);
         } else {
@@ -211,6 +219,7 @@ Deploying to: ${networkConfiguration.networkName}
         mapping['BuyParticipationTokens'] = this.contracts.get('BuyParticipationTokens').address!;
         mapping['RedeemStake'] = this.contracts.get('RedeemStake').address!;
         mapping['AugurTrading'] = this.contracts.get('AugurTrading').address!;
+        mapping['ZeroXExchange'] = this.contracts.get('Exchange').address!;
         for (let contract of this.contracts) {
             if (/^I[A-Z].*/.test(contract.contractName)) continue;
             if (contract.contractName === 'TimeControlled') continue;
@@ -230,6 +239,21 @@ Deploying to: ${networkConfiguration.networkName}
             }
             if (contract.relativeFilePath.startsWith('legacy_reputation/')) continue;
             if (contract.relativeFilePath.startsWith('external/')) continue;
+
+            // 0x
+            if (this.configuration.externalAddresses.ZeroXExchange && [
+              'ERC20Proxy',
+              'ERC721Proxy',
+              'ERC1155Proxy',
+              'Exchange',
+              'Coordinator',
+              'CoordinatorRegistry',
+              'DevUtils',
+              'WETH9',
+              'ZRXToken',
+            ].includes(contract.contractName)) continue;
+            if (contract.contractName === 'Exchange') continue;
+
             if (contract.contractName !== 'Map' && contract.relativeFilePath.startsWith('libraries/')) continue;
             if (['Cash', 'TestNetDaiVat', 'TestNetDaiPot', 'TestNetDaiJoin'].includes(contract.contractName)) continue;
             if (['IAugur', 'IDisputeCrowdsourcer', 'IDisputeWindow', 'IUniverse', 'IMarket', 'IReportingParticipant', 'IReputationToken', 'IOrders', 'IShareToken', 'Order', 'IV2ReputationToken', 'IInitialReporter'].includes(contract.contractName)) continue;
@@ -510,8 +534,7 @@ Deploying to: ${networkConfiguration.networkName}
 
     public async initializeLegacyRep(): Promise<void> {
         const legacyReputationToken = new LegacyReputationToken(this.dependencies, this.getContractAddress('LegacyReputationToken'));
-        await legacyReputationToken.initializeERC1820(this.augur!.address);
-        await legacyReputationToken.faucet(new BigNumber(1));
+        await legacyReputationToken.faucet(new BigNumber(11000000).multipliedBy(10**18));
         const defaultAddress = await this.signer.getAddress();
         const legacyBalance = await legacyReputationToken.balanceOf_(defaultAddress);
         if (!legacyBalance || legacyBalance.isEqualTo(0)) {

@@ -5,7 +5,7 @@
 }
 
 div.Table {
-  color: white;
+  color: @color-primary-text;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
@@ -25,11 +25,19 @@ div.Table {
   }
 }
 
+.scrollable {
+  > ul {
+    // if the module becomes scrollable, we pad 15 more px for scrollbar.
+    padding-right: @size-31;
+  }
+}
+
 div.TableHeight {
   top: 0;
   left: 0;
   right: 0;
   bottom: @size-32;
+  position: absolute;
 }
 
 .Empty {
@@ -37,6 +45,7 @@ div.TableHeight {
 }
 
 .Footer {
+  border-top: 1px solid @color-dark-grey;
   display: flex;
   justify-content: flex-end;
   min-height: @size-32;

@@ -2,6 +2,7 @@ import React from 'react';
 import * as constants from 'modules/common/constants';
 import {
   LinearPropertyLabel,
+  InvalidLabel,
   PendingLabel,
   PositionTypeLabel,
   ValueLabel,
@@ -32,6 +33,7 @@ export interface Properties {
   outcome?: string;
   location?: string;
   showExtraNumber?: Boolean;
+  status?: string;
 }
 
 function selectColumn(columnType: string, properties: Properties) {
@@ -66,6 +68,7 @@ function selectColumn(columnType: string, properties: Properties) {
                   value={properties.value}
                   keyId={properties.keyId}
                   showEmptyDash={properties.showEmptyDash}
+                  useFull={properties.useFull}
                 />
               </button>
             )}
@@ -74,16 +77,21 @@ function selectColumn(columnType: string, properties: Properties) {
                 value={properties.value}
                 keyId={properties.keyId}
                 showEmptyDash={properties.showEmptyDash}
+                useFull={properties.useFull}
               />
             )}
           </>
         )
       );
+    case COLUMN_TYPES.INVALID_LABEL:
+      return (
+        <InvalidLabel text={properties.text} keyId={properties.keyId} />
+      );
     case COLUMN_TYPES.CANCEL_TEXT_BUTTON:
       return properties.pending ? (
         <span>
           {' '}
-          <PendingLabel />{' '}
+          <PendingLabel status={properties.status}/>{' '}
         </span>
       ) : (
         <CancelTextButton

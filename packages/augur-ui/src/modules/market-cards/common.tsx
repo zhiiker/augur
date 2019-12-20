@@ -1,6 +1,7 @@
 import React from 'react';
 import classNames from 'classnames';
 
+import MarketLink from 'modules/market/components/market-link/market-link';
 import {
   CATEGORICAL,
   SCALAR,
@@ -8,6 +9,7 @@ import {
   REPORTING_STATE,
   ZERO,
   SCALAR_UP_ID,
+  INVALID_OUTCOME_ID
 } from 'modules/common/constants';
 import { createBigNumber, BigNumber } from 'utils/create-big-number';
 import ReactTooltip from 'react-tooltip';
@@ -16,6 +18,7 @@ import { CheckCircleIcon } from 'modules/common/icons';
 import { OutcomeFormatted, FormattedNumber, MarketData } from 'modules/types';
 import { formatDai, formatAttoRep, formatNumber } from 'utils/format-number';
 import { Getters } from '@augurproject/sdk';
+import { InvalidLabel } from 'modules/common/labels';
 import { SecondaryButton } from 'modules/common/buttons';
 
 import Styles from 'modules/market-cards/common.styles.less';
@@ -41,6 +44,8 @@ export interface OutcomeProps {
   min: BigNumber;
   max: BigNumber;
   isScalar: boolean;
+  marketId: string;
+  outcomeId: string;
 }
 
 export const Outcome = (props: OutcomeProps) => {
@@ -48,22 +53,24 @@ export const Outcome = (props: OutcomeProps) => {
     ? calculatePosition(props.min, props.max, props.lastPricePercent)
     : 0;
   return (
-    <div
-      className={classNames(Styles.Outcome, {
-        [Styles.invalid]: props.invalid,
-        [Styles[`Outcome-${props.index}`]]: !props.invalid,
-      })}
-    >
-      <div>
-        <span>{props.description}</span>
-        <span>
-          {percent === 0
-            ? `-${props.isScalar ? '' : '%'}`
-            : `${formatDai(percent).formatted}%`}
-        </span>
+    <MarketLink id={props.marketId} outcomeId={props.outcomeId.toString()}>
+      <div
+        className={classNames(Styles.Outcome, {
+          [Styles.invalid]: props.invalid,
+          [Styles[`Outcome-${props.index}`]]: !props.invalid,
+        })}
+      >
+        <div>
+          {props.invalid ? <InvalidLabel text={props.description} keyid={`${props.marketId}_${props.description}`} /> : <span>{props.description}</span>}
+          <span className={classNames({[Styles.Zero]: percent === 0})}>
+            {percent === 0
+              ? `0.00${props.isScalar ? '' : '%'}`
+              : `${formatDai(percent).formatted}%`}
+          </span>
+        </div>
+        <Percent percent={percent} />
       </div>
-      <Percent percent={percent} />
-    </div>
+    </MarketLink>
   );
 };
 
@@ -174,28 +181,32 @@ export interface ScalarOutcomeProps {
   min: BigNumber;
   max: BigNumber;
   lastPrice?: FormattedNumber;
+  marketId: string;
+  outcomeId: string;
 }
 
 export const ScalarOutcome = (props: ScalarOutcomeProps) => (
-  <div className={Styles.ScalarOutcome}>
-    <div>
-      {props.lastPrice !== null && (
-        <span
-          style={{
-            left:
-              calculatePosition(props.min, props.max, props.lastPrice) + '%',
-          }}
-        >
-          {props.lastPrice.formatted}
-        </span>
-      )}
+  <MarketLink id={props.marketId} outcomeId={props.outcomeId}>
+    <div className={Styles.ScalarOutcome}>
+      <div>
+        {props.lastPrice !== null && (
+          <span
+            style={{
+              left:
+                calculatePosition(props.min, props.max, props.lastPrice) + '%',
+            }}
+          >
+            {props.lastPrice.formatted}
+          </span>
+        )}
+      </div>
+      <div>
+        {formatDai(props.min).formatted}
+        <span>{props.scalarDenomination}</span>
+        {formatDai(props.max).formatted}
+      </div>
     </div>
-    <div>
-      {formatDai(props.min).formatted}
-      <span>{props.scalarDenomination}</span>
-      {formatDai(props.max).formatted}
-    </div>
-  </div>
+  </MarketLink>
 );
 
 export interface OutcomeGroupProps {
@@ -212,6 +223,7 @@ export interface OutcomeGroupProps {
   showOutcomeNumber: number;
   canDispute: boolean;
   canSupport: boolean;
+  marketId: string;
 }
 
 export const OutcomeGroup = (props: OutcomeGroupProps) => {
@@ -260,6 +272,8 @@ export const OutcomeGroup = (props: OutcomeGroupProps) => {
                 : null
             }
             scalarDenomination={props.scalarDenomination}
+            marketId={props.marketId}
+            outcomeId={SCALAR_UP_ID}
           />
           <Outcome
             description={removedInvalid.description}
@@ -271,6 +285,8 @@ export const OutcomeGroup = (props: OutcomeGroupProps) => {
             min={props.min}
             max={props.max}
             isScalar={props.marketType === SCALAR}
+            marketId={props.marketId}
+            outcomeId={INVALID_OUTCOME_ID}
           />
         </>
       )}
@@ -303,6 +319,8 @@ export const OutcomeGroup = (props: OutcomeGroupProps) => {
                 min={props.min}
                 max={props.max}
                 isScalar={props.marketType === SCALAR}
+                marketId={props.marketId}
+                outcomeId={outcome.id}
               />
             ))
         )}

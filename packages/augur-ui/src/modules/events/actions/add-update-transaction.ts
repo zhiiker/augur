@@ -1,3 +1,4 @@
+import store, { AppState } from 'store';
 import {
   addCanceledOrder,
   removeCanceledOrder,
@@ -53,6 +54,8 @@ import {
   deleteLiquidityOrder,
 } from 'modules/events/actions/liquidity-transactions';
 import { addAlert, updateAlert } from 'modules/alerts/actions/alerts';
+import { getDeconstructedMarketId } from 'modules/create-market/helpers/construct-market-params';
+import { orderCreated } from 'services/analytics/helpers';
 
 export const addUpdateTransaction = (txStatus: Events.TXStatus) => (
   dispatch: ThunkDispatch<void, any, Action>,
@@ -64,10 +67,11 @@ export const addUpdateTransaction = (txStatus: Events.TXStatus) => (
     const { blockchain, alerts } = getState();
 
     if (eventName === TXEventName.Failure) {
+      const genHash = hash ? hash : generateTxParameterId(transaction.params);
       dispatch(
         addAlert({
-          id: hash ? hash : generateTxParameterId(transaction.params),
-          uniqueId: hash ? hash : generateTxParameterId(transaction.params),
+          id: genHash,
+          uniqueId: genHash,
           params: transaction.params,
           status: eventName,
           timestamp: blockchain.currentAugurTimestamp * 1000,
@@ -144,6 +148,13 @@ export const addUpdateTransaction = (txStatus: Events.TXStatus) => (
           updatePendingOrderStatus(tradeGroupId, marketId, eventName, hash)
         );
         if (eventName === TXEventName.Success) {
+          const order: UIOrder = convertTransactionOrderToUIOrder(
+            txStatus.hash,
+            txStatus.transaction.params,
+            txStatus.eventName,
+            market
+          );
+          dispatch(orderCreated(marketId, order));
           dispatch(removePendingOrder(tradeGroupId, marketId));
         }
         break;
@@ -152,7 +163,7 @@ export const addUpdateTransaction = (txStatus: Events.TXStatus) => (
       case CREATECATEGORICALMARKET:
       case CREATESCALARMARKET:
       case CREATEYESNOMARKET: {
-        const id = generateTxParameterId(transaction.params);
+        const id = getDeconstructedMarketId(transaction.params);
         const data = createMarketData(
           transaction.params,
           id,
@@ -243,5 +254,18 @@ function addOrder(
     return console.log(
       `Could not process order to add pending order for market ${market.id}`
     );
-  dispatch(addPendingOrder(order, market.id));
+
+  const { blockchain } = store.getState() as AppState;
+
+  dispatch(
+    addPendingOrder(
+      {
+        ...order,
+        creationTime: convertUnixToFormattedDate(
+          blockchain.currentAugurTimestamp
+        ),
+      },
+      market.id
+    )
+  );
 }

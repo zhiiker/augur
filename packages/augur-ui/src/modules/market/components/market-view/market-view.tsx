@@ -9,7 +9,7 @@ import { FindReact } from 'utils/find-react';
 import MarketHeader from 'modules/market/containers/market-header';
 import MarketOrdersPositionsTable from 'modules/market/containers/market-orders-positions-table';
 import MarketOutcomesList from 'modules/market/containers/market-outcomes-list';
-import TradingForm from 'modules/market/containers/trading-form';
+import TradingForm from 'modules/trading/components/trading-form';
 import OrderBook from 'modules/market-charts/containers/order-book';
 import MarketChartsPane from 'modules/market-charts/containers/market-charts-pane';
 import parseMarketTitle from 'modules/markets/helpers/parse-market-title';
@@ -20,7 +20,6 @@ import {
   BUY,
   PUBLICFILLORDER,
   LONG,
-  YES_NO_YES_ID,
   TRADING_TUTORIAL,
   TRADING_TUTORIAL_STEPS,
   TRADING_TUTORIAL_COPY,
@@ -76,6 +75,7 @@ interface MarketViewProps {
   hotloadMarket: Function;
   canHotload: boolean;
   removeAlert: Function;
+  outcomeId?: number;
 }
 
 interface DefaultOrderPropertiesMap {
@@ -125,9 +125,9 @@ export default class MarketView extends Component<
       extendOutcomesList: cat5 ? true : false,
       extendOrders: false,
       selectedOrderProperties: this.DEFAULT_ORDER_PROPERTIES,
-      selectedOutcomeId: props.market
+      selectedOutcomeId: props.outcomeId !== null ? props.outcomeId : (props.market
         ? props.market.defaultSelectedOutcomeId
-        : undefined,
+        : undefined),
       fixedPrecision: 4,
       tutorialError: '',
       selectedOutcomeProperties: {
@@ -174,8 +174,6 @@ export default class MarketView extends Component<
 
     if (isMarketLoading) {
       showMarketLoadingModal();
-    } else {
-      this.showMarketDisclaimer();
     }
   }
 
@@ -187,7 +185,12 @@ export default class MarketView extends Component<
       closeMarketLoadingModal,
       tradingTutorial,
       updateModal,
+      selectedOutcomeId
     } = prevProps;
+
+    if (this.props.outcomeId !== prevProps.outcomeId && this.props.outcomeId !== null) {
+      this.setState({selectedOutcomeId: this.props.outcomeId})
+    }
 
     if (tradingTutorial) {
       if (
@@ -215,7 +218,6 @@ export default class MarketView extends Component<
     }
     if (isMarketLoading !== this.props.isMarketLoading) {
       closeMarketLoadingModal();
-      this.showMarketDisclaimer();
     }
   }
 
@@ -228,6 +230,7 @@ export default class MarketView extends Component<
     }
   }
 
+  // don't show the market disclaimer when user shows up. TODO: Design to figure out when to show
   showMarketDisclaimer() {
     const { marketReviewSeen, marketReviewModal } = this.props;
     if (!marketReviewSeen && marketReviewModal) {
@@ -344,6 +347,11 @@ export default class MarketView extends Component<
   };
 
   next = () => {
+    if (this.state.tutorialStep === TRADING_TUTORIAL_STEPS.ORDER_BOOK) {
+      // Scroll to bottom since next tutorial card will be below the fold.
+      document.querySelector('#mainContent').scrollTo(0, document.body.scrollHeight);
+    }
+
     if (!this.checkTutorialErrors(this.state.selectedOrderProperties)) {
       this.setState({ tutorialStep: this.state.tutorialStep + 1 });
     }
@@ -652,6 +660,7 @@ export default class MarketView extends Component<
                                   toggle={this.toggleTradeHistory}
                                   extend={extendTradeHistory}
                                   hide={extendOrderBook}
+                                  marketType={market.marketType}
                                 />
                               )}
                             </div>
@@ -980,6 +989,7 @@ export default class MarketView extends Component<
                             outcome={outcomeId}
                             toggle={this.toggleTradeHistory}
                             extend={extendTradeHistory}
+                            marketType={market.marketType}
                             hide={extendOrderBook}
                             tradingTutorial={tradingTutorial}
                             groupedTradeHistory={market.groupedTradeHistory}

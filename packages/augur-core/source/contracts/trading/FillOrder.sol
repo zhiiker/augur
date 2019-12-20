@@ -13,6 +13,7 @@ import 'ROOT/trading/IProfitLoss.sol';
 import 'ROOT/trading/Order.sol';
 import 'ROOT/libraries/Initializable.sol';
 import 'ROOT/trading/IAugurTrading.sol';
+import 'ROOT/libraries/TokenId.sol';
 
 
 library Trade {
@@ -202,13 +203,13 @@ library Trade {
 
         // transfer shares from creator (escrowed in market) to filler
         if (_data.creator.direction == Direction.Short) {
-            _data.contracts.shareToken.unsafeTransferFrom(_data.shortFundsAccount, _data.filler.participantAddress, _data.contracts.shareToken.getTokenId(_data.contracts.market, _data.longOutcome), _numberOfSharesToTrade);
+            _data.contracts.shareToken.unsafeTransferFrom(_data.shortFundsAccount, _data.filler.participantAddress, TokenId.getTokenId(_data.contracts.market, _data.longOutcome), _numberOfSharesToTrade);
         } else {
             uint256[] memory _values = new uint256[](_data.shortOutcomes.length);
             for (uint256 _i = 0; _i < _data.shortOutcomes.length; _i++) {
                 _values[_i] = _numberOfSharesToTrade;
             }
-            _data.contracts.shareToken.unsafeBatchTransferFrom(_data.longFundsAccount, _data.filler.participantAddress, _data.contracts.shareToken.getTokenIds(_data.contracts.market, _data.shortOutcomes), _values);
+            _data.contracts.shareToken.unsafeBatchTransferFrom(_data.longFundsAccount, _data.filler.participantAddress, TokenId.getTokenIds(_data.contracts.market, _data.shortOutcomes), _values);
         }
 
         uint256 _tokensToCover = getTokensToCover(_data, _data.filler.direction, _numberOfSharesToTrade);
@@ -228,13 +229,13 @@ library Trade {
 
         // transfer shares from filler to creator
         if (_data.filler.direction == Direction.Short) {
-            _data.contracts.shareToken.unsafeTransferFrom(_data.filler.participantAddress, _data.creator.participantAddress, _data.contracts.shareToken.getTokenId(_data.contracts.market, _data.longOutcome), _numberOfSharesToTrade);
+            _data.contracts.shareToken.unsafeTransferFrom(_data.filler.participantAddress, _data.creator.participantAddress, TokenId.getTokenId(_data.contracts.market, _data.longOutcome), _numberOfSharesToTrade);
         } else {
             uint256[] memory _values = new uint256[](_data.shortOutcomes.length);
             for (uint256 _i = 0; _i < _data.shortOutcomes.length; _i++) {
                 _values[_i] = _numberOfSharesToTrade;
             }
-            _data.contracts.shareToken.unsafeBatchTransferFrom(_data.filler.participantAddress, _data.creator.participantAddress, _data.contracts.shareToken.getTokenIds(_data.contracts.market, _data.shortOutcomes), _values);
+            _data.contracts.shareToken.unsafeBatchTransferFrom(_data.filler.participantAddress, _data.creator.participantAddress, TokenId.getTokenIds(_data.contracts.market, _data.shortOutcomes), _values);
         }
 
         // transfer tokens from creator (taken from the signer for signed orders, escrowed in Augur Trading for on chain orders) to filler
@@ -462,8 +463,13 @@ contract FillOrder is Initializable, ReentrancyGuard, IFillOrder {
             profitLoss: IProfitLoss(_augurTrading.lookup("ProfitLoss")),
             shareToken: IShareToken(_augur.lookup("ShareToken"))
         });
+        require(storedContracts.orders != IOrders(0));
+        require(storedContracts.profitLoss != IProfitLoss(0));
+        require(storedContracts.shareToken != IShareToken(0));
         trade = _augurTrading.lookup("Trade");
+        require(trade != address(0));
         zeroXTrade = _augurTrading.lookup("ZeroXTrade");
+        require(zeroXTrade != address(0));
         _cash.approve(address(_augur), MAX_APPROVAL_AMOUNT);
     }
 
@@ -484,13 +490,14 @@ contract FillOrder is Initializable, ReentrancyGuard, IFillOrder {
     }
 
     function fillOrder(address _filler, bytes32 _orderId, uint256 _amountFillerWants, bytes32 _tradeGroupId, bytes32 _fingerprint) external returns (uint256) {
-        require(msg.sender == trade || msg.sender == address(this));
+        require(msg.sender == trade);
         Trade.Data memory _tradeData = Trade.create(storedContracts, _orderId, _filler, _amountFillerWants, _fingerprint);
         return fillOrderInternal(_filler, _tradeData, _amountFillerWants, _tradeGroupId);
     }
 
     function fillZeroXOrder(IMarket _market, uint256 _outcome, IERC20 _kycToken, uint256 _price, Order.Types _orderType, uint256 _amount, address _creator, bytes32 _tradeGroupId, bytes32 _fingerprint, address _filler) external returns (uint256) {
         require(msg.sender == zeroXTrade);
+        require(augur.isKnownMarket(_market));
         Trade.OrderData memory _orderData = Trade.createOrderData(storedContracts.shareToken, _market, _outcome, _kycToken, _price, _orderType, _amount, _creator);
         Trade.Data memory _tradeData = Trade.createWithData(storedContracts, _orderData, _filler, _amount, _fingerprint);
         return fillOrderInternal(_filler, _tradeData, _amount, _tradeGroupId);

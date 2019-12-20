@@ -20,14 +20,18 @@ import 'ROOT/external/IDaiPot.sol';
 import 'ROOT/external/IDaiJoin.sol';
 import 'ROOT/utility/IFormulas.sol';
 import 'ROOT/IAugur.sol';
+import 'ROOT/CashSender.sol';
 
 
 /**
  * @title Universe
  * @notice A Universe encapsulates a whole instance of Augur. In the event of a fork in a Universe it will split into child Universes which each represent a different version of the truth with respect to how the forking market should resolve.
  */
-contract Universe is IUniverse {
+contract Universe is IUniverse, CashSender {
     using SafeMathUint256 for uint256;
+
+    uint256 public creationTime;
+    mapping(address => uint256) public marketBalance;
 
     IAugur public augur;
     IUniverse private parentUniverse;
@@ -45,21 +49,21 @@ contract Universe is IUniverse {
     uint256 private disputeThresholdForFork;
     uint256 private disputeThresholdForDisputePacing;
     uint256 private initialReportMinValue;
-    mapping(uint256 => IDisputeWindow) private disputeWindows;
+    mapping(uint256 => IDisputeWindow) public disputeWindows;
     mapping(address => bool) private markets;
     mapping(bytes32 => IUniverse) private childUniverses;
     uint256 private openInterestInAttoCash;
     IMarketFactory public marketFactory;
     IDisputeWindowFactory public disputeWindowFactory;
 
-    mapping (address => uint256) private validityBondInAttoCash;
-    mapping (address => uint256) private designatedReportStakeInAttoRep;
-    mapping (address => uint256) private designatedReportNoShowBondInAttoRep;
+    mapping (address => uint256) public validityBondInAttoCash;
+    mapping (address => uint256) public designatedReportStakeInAttoRep;
+    mapping (address => uint256) public designatedReportNoShowBondInAttoRep;
     uint256 public previousValidityBondInAttoCash;
     uint256 public previousDesignatedReportStakeInAttoRep;
     uint256 public previousDesignatedReportNoShowBondInAttoRep;
 
-    mapping (address => uint256) private shareSettlementFeeDivisor;
+    mapping (address => uint256) public shareSettlementFeeDivisor;
     uint256 public previousReportingFeeDivisor;
 
     uint256 constant public INITIAL_WINDOW_ID_BUFFER = 365 days * 10 ** 8;
@@ -73,7 +77,7 @@ contract Universe is IUniverse {
     IDaiPot public daiPot;
     IDaiJoin public daiJoin;
 
-    uint256 constant public DAI_ONE = 10 ** 27;
+    uint256 constant public RAY = 10 ** 27;
 
     constructor(IAugur _augur, IUniverse _parentUniverse, bytes32 _parentPayoutDistributionHash, uint256[] memory _payoutNumerators) public {
         augur = _augur;
@@ -93,9 +97,24 @@ contract Universe is IUniverse {
         daiVat = IDaiVat(augur.lookup("DaiVat"));
         daiPot = IDaiPot(augur.lookup("DaiPot"));
         daiJoin = IDaiJoin(augur.lookup("DaiJoin"));
+        assertContractsNotZero();
         daiVat.hope(address(daiPot));
         daiVat.hope(address(daiJoin));
         cash.approve(address(daiJoin), 2 ** 256 - 1);
+
+        initializeCashSender(address(daiVat), address(cash));
+    }
+
+    function assertContractsNotZero() private view {
+        require(marketFactory != IMarketFactory(0));
+        require(disputeWindowFactory != IDisputeWindowFactory(0));
+        require(shareToken != IShareToken(0));
+        require(repPriceOracle != IRepPriceOracle(0));
+        require(formulas != IFormulas(0));
+        require(cash != ICash(0));
+        require(daiVat != IDaiVat(0));
+        require(daiPot != IDaiPot(0));
+        require(daiJoin != IDaiJoin(0));
     }
 
     function fork() public returns (bool) {
@@ -603,7 +622,7 @@ contract Universe is IUniverse {
      */
     function createYesNoMarket(uint256 _endTime, uint256 _feePerCashInAttoCash, IAffiliateValidator _affiliateValidator, uint256 _affiliateFeeDivisor, address _designatedReporterAddress, string memory _extraInfo) public returns (IMarket _newMarket) {
         _newMarket = createMarketInternal(_endTime, _feePerCashInAttoCash, _affiliateValidator, _affiliateFeeDivisor, _designatedReporterAddress, msg.sender, DEFAULT_NUM_OUTCOMES, DEFAULT_NUM_TICKS);
-        augur.logYesNoMarketCreated(_endTime, _extraInfo, _newMarket, msg.sender, _designatedReporterAddress, _feePerCashInAttoCash);
+        augur.onYesNoMarketCreated(_endTime, _extraInfo, _newMarket, msg.sender, _designatedReporterAddress, _feePerCashInAttoCash);
         return _newMarket;
     }
 
@@ -620,7 +639,7 @@ contract Universe is IUniverse {
      */
     function createCategoricalMarket(uint256 _endTime, uint256 _feePerCashInAttoCash, IAffiliateValidator _affiliateValidator, uint256 _affiliateFeeDivisor, address _designatedReporterAddress, bytes32[] memory _outcomes, string memory _extraInfo) public returns (IMarket _newMarket) {
         _newMarket = createMarketInternal(_endTime, _feePerCashInAttoCash, _affiliateValidator, _affiliateFeeDivisor, _designatedReporterAddress, msg.sender, uint256(_outcomes.length), DEFAULT_NUM_TICKS);
-        augur.logCategoricalMarketCreated(_endTime, _extraInfo, _newMarket, msg.sender, _designatedReporterAddress, _feePerCashInAttoCash, _outcomes);
+        augur.onCategoricalMarketCreated(_endTime, _extraInfo, _newMarket, msg.sender, _designatedReporterAddress, _feePerCashInAttoCash, _outcomes);
         return _newMarket;
     }
 
@@ -638,13 +657,13 @@ contract Universe is IUniverse {
      */
     function createScalarMarket(uint256 _endTime, uint256 _feePerCashInAttoCash, IAffiliateValidator _affiliateValidator, uint256 _affiliateFeeDivisor, address _designatedReporterAddress, int256[] memory _prices, uint256 _numTicks, string memory _extraInfo) public returns (IMarket _newMarket) {
         _newMarket = createMarketInternal(_endTime, _feePerCashInAttoCash, _affiliateValidator, _affiliateFeeDivisor, _designatedReporterAddress, msg.sender, DEFAULT_NUM_OUTCOMES, _numTicks);
-        augur.logScalarMarketCreated(_endTime, _extraInfo, _newMarket, msg.sender, _designatedReporterAddress, _feePerCashInAttoCash, _prices, _numTicks);
+        augur.onScalarMarketCreated(_endTime, _extraInfo, _newMarket, msg.sender, _designatedReporterAddress, _feePerCashInAttoCash, _prices, _numTicks);
         return _newMarket;
     }
 
     function createMarketInternal(uint256 _endTime, uint256 _feePerCashInAttoCash, IAffiliateValidator _affiliateValidator, uint256 _affiliateFeeDivisor, address _designatedReporterAddress, address _sender, uint256 _numOutcomes, uint256 _numTicks) private returns (IMarket _newMarket) {
-        getReputationToken().trustedUniverseTransfer(_sender, address(marketFactory), getOrCacheMarketRepBond());
-        _newMarket = marketFactory.createMarket(augur, this, _endTime, _feePerCashInAttoCash, _affiliateValidator, _affiliateFeeDivisor, _designatedReporterAddress, _sender, _numOutcomes, _numTicks);
+        reputationToken.trustedUniverseTransfer(_sender, address(marketFactory), getOrCacheMarketRepBond());
+        _newMarket = marketFactory.createMarket(augur, _endTime, _feePerCashInAttoCash, _affiliateValidator, _affiliateFeeDivisor, _designatedReporterAddress, _sender, _numOutcomes, _numTicks);
         markets[address(_newMarket)] = true;
         shareToken.initializeMarket(_newMarket, _numOutcomes + 1, _numTicks); // To account for Invalid
         return _newMarket;
@@ -652,17 +671,16 @@ contract Universe is IUniverse {
 
     function saveDaiInDSR(uint256 _amount) private returns (bool) {
         daiJoin.join(address(this), _amount);
-        daiPot.drip();
-        uint256 _sDaiAmount = _amount.mul(DAI_ONE) / daiPot.chi(); // sDai may be lower than the full amount joined above. This means the VAT may have some dust and we'll be saving less than intended by a dust amount
+        uint256 _chi = daiPot.drip();
+        uint256 _sDaiAmount = _amount.mul(RAY) / _chi; // sDai may be lower than the full amount joined above. This means the VAT may have some dust and we'll be saving less than intended by a dust amount
         daiPot.join(_sDaiAmount);
         return true;
     }
 
     function withdrawDaiFromDSR(uint256 _amount) private returns (bool) {
-        daiPot.drip();
-        uint256 _chi = daiPot.chi();
-        uint256 _sDaiAmount = _amount.mul(DAI_ONE) / _chi; // sDai may be lower than the amount needed to retrieve `amount` from the VAT. We cover for this rounding error below
-        if (_sDaiAmount.mul(_chi) < _amount.mul(DAI_ONE)) {
+        uint256 _chi = daiPot.drip();
+        uint256 _sDaiAmount = _amount.mul(RAY) / _chi; // sDai may be lower than the amount needed to retrieve `amount` from the VAT. We cover for this rounding error below
+        if (_sDaiAmount.mul(_chi) < _amount.mul(RAY)) {
             _sDaiAmount += 1;
         }
         _sDaiAmount = _sDaiAmount.min(daiPot.pie(address(this))); // Never try to draw more than the balance in the pot. If we have less than needed we _must_ have enough already in the VAT provided no negative interest was ever applied
@@ -672,13 +690,15 @@ contract Universe is IUniverse {
 
     function withdrawSDaiFromDSR(uint256 _sDaiAmount) private returns (bool) {
         daiPot.exit(_sDaiAmount);
-        daiJoin.exit(address(this), daiVat.dai(address(this)).div(DAI_ONE));
+        if (daiJoin.live() == 1) {
+            daiJoin.exit(address(this), daiVat.dai(address(this)).div(RAY));
+        }
         return true;
     }
 
     function deposit(address _sender, uint256 _amount, address _market) public returns (bool) {
         require(augur.isTrustedSender(msg.sender) || msg.sender == _sender || msg.sender == address(openInterestCash));
-        augur.trustedTransfer(cash, _sender, address(this), _amount);
+        augur.trustedCashTransfer(_sender, address(this), _amount);
         totalBalance = totalBalance.add(_amount);
         marketBalance[_market] = marketBalance[_market].add(_amount);
         saveDaiInDSR(_amount);
@@ -693,19 +713,19 @@ contract Universe is IUniverse {
         totalBalance = totalBalance.sub(_amount);
         marketBalance[_market] = marketBalance[_market].sub(_amount);
         withdrawDaiFromDSR(_amount);
-        cash.transfer(_recipient, _amount);
+        cashTransfer(_recipient, _amount);
         return true;
     }
 
     function sweepInterest() public returns (bool) {
         uint256 _extraCash = 0;
-        daiPot.drip();
+        uint256 _chi = daiPot.drip();
         withdrawSDaiFromDSR(daiPot.pie(address(this))); // Pull out all funds
         saveDaiInDSR(totalBalance); // Put the required funds back in savings
         _extraCash = cash.balanceOf(address(this));
         // The amount in the DSR pot and VAT must cover our totalBalance of Dai
-        assert(daiPot.pie(address(this)).mul(daiPot.chi()).add(daiVat.dai(address(this))) >= totalBalance.mul(DAI_ONE));
-        cash.transfer(address(getOrCreateNextDisputeWindow(false)), _extraCash);
+        assert(daiPot.pie(address(this)).mul(_chi).add(daiVat.dai(address(this))) >= totalBalance.mul(RAY));
+        cashTransfer(address(getOrCreateNextDisputeWindow(false)), _extraCash);
         return true;
     }
 }

@@ -1,47 +1,41 @@
 import {
-  handleMarketCreatedLog,
-  handleMarketMigratedLog,
-  handleTokensTransferredLog,
-  handleOrderLog,
-  handleTradingProceedsClaimedLog,
-  handleInitialReportSubmittedLog,
-  handleInitialReporterRedeemedLog,
-  handleMarketFinalizedLog,
-  handleDisputeCrowdsourcerCreatedLog,
-  handleDisputeCrowdsourcerContributionLog,
   handleDisputeCrowdsourcerCompletedLog,
+  handleDisputeCrowdsourcerContributionLog,
+  handleDisputeCrowdsourcerCreatedLog,
   handleDisputeCrowdsourcerRedeemedLog,
   handleDisputeWindowCreatedLog,
+  handleGnosisStateUpdate,
+  handleInitialReporterRedeemedLog,
   handleInitialReporterTransferredLog,
-  handleParticipationTokensRedeemedLog,
-  handleReportingParticipantDisavowedLog,
+  handleInitialReportSubmittedLog,
+  handleMarketCreatedLog,
+  handleMarketFinalizedLog,
+  handleMarketMigratedLog,
+  handleMarketOIChangedLog,
   handleMarketParticipantsDisavowedLog,
+  handleMarketsUpdatedLog,
   handleMarketTransferredLog,
   handleMarketVolumeChangedLog,
-  handleMarketOIChangedLog,
-  handleProfitLossChangedLog,
-  handleTokenBalanceChangedLog,
-  handleUniverseForkedLog,
   handleNewBlockLog,
-  handleMarketsUpdatedLog,
-  handleTxAwaitingSigning,
-  handleTxSuccess,
-  handleTxPending,
-  handleTxFailure,
+  handleOrderLog,
+  handleParticipationTokensRedeemedLog,
+  handleProfitLossChangedLog,
+  handleReportingParticipantDisavowedLog,
   handleSDKReadyEvent,
-  handleUserDataSyncedEvent,
+  handleTokenBalanceChangedLog,
   handleTokensMintedLog,
-  handleGnosisStateUpdate,
+  handleTokensTransferredLog,
+  handleTradingProceedsClaimedLog,
+  handleTxAwaitingSigning,
+  handleTxFailure,
+  handleTxPending,
+  handleTxSuccess,
+  handleUniverseForkedLog,
 } from 'modules/events/actions/log-handlers';
 import { wrapLogHandler } from 'modules/events/actions/wrap-log-handler';
 import { ThunkDispatch } from 'redux-thunk';
 import { Action } from 'redux';
-import {
-  Augur,
-  SubscriptionEventName,
-  Provider,
-  TXEventName,
-} from '@augurproject/sdk';
+import { Augur, Provider, SubscriptionEventName, TXEventName, } from '@augurproject/sdk';
 
 const StartUpEvents = {
   [SubscriptionEventName.SDKReady]: wrapLogHandler(handleSDKReadyEvent),
@@ -51,7 +45,6 @@ const StartUpEvents = {
 };
 
 const EVENTS = {
-  [SubscriptionEventName.UserDataSynced]: wrapLogHandler(handleUserDataSyncedEvent),
   [SubscriptionEventName.NewBlock]: wrapLogHandler(handleNewBlockLog),
   [SubscriptionEventName.MarketCreated]: wrapLogHandler(handleMarketCreatedLog),
   [SubscriptionEventName.MarketMigrated]: wrapLogHandler(

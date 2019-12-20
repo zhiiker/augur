@@ -1,6 +1,5 @@
 pragma solidity 0.5.10;
 
-import 'ROOT/libraries/IERC1820Registry.sol';
 import 'ROOT/reporting/IV2ReputationToken.sol';
 import 'ROOT/libraries/ITyped.sol';
 import 'ROOT/libraries/token/VariableSupplyToken.sol';
@@ -23,20 +22,20 @@ contract ReputationToken is VariableSupplyToken, IV2ReputationToken {
 
     string constant public name = "Reputation";
     IUniverse internal universe;
-    IUniverse internal parentUniverse;
+    IUniverse public parentUniverse;
     uint256 internal totalMigrated;
     IERC20 public legacyRepToken;
     IAugur public augur;
     address public warpSync;
 
-    constructor(IAugur _augur, IUniverse _universe, IUniverse _parentUniverse, address _erc1820RegistryAddress) public {
+    constructor(IAugur _augur, IUniverse _universe, IUniverse _parentUniverse) public {
         augur = _augur;
         universe = _universe;
         parentUniverse = _parentUniverse;
         warpSync = _augur.lookup("WarpSync");
-        legacyRepToken = IERC20(augur.lookup("LegacyReputationToken"));
-        erc1820Registry = IERC1820Registry(_erc1820RegistryAddress);
-        initialize1820InterfaceImplementations();
+        legacyRepToken = IERC20(_augur.lookup("LegacyReputationToken"));
+        require(warpSync != address(0));
+        require(legacyRepToken != IERC20(0));
     }
 
     function symbol() public view returns (string memory) {
@@ -59,7 +58,7 @@ contract ReputationToken is VariableSupplyToken, IV2ReputationToken {
     }
 
     function migrateIn(address _reporter, uint256 _attotokens) public returns (bool) {
-        IUniverse _parentUniverse = universe.getParentUniverse();
+        IUniverse _parentUniverse = parentUniverse;
         require(ReputationToken(msg.sender) == _parentUniverse.getReputationToken());
         require(augur.getTimestamp() < _parentUniverse.getForkEndTime());
         mint(_reporter, _attotokens);
@@ -72,9 +71,8 @@ contract ReputationToken is VariableSupplyToken, IV2ReputationToken {
     }
 
     function mintForReportingParticipant(uint256 _amountMigrated) public returns (bool) {
-        IUniverse _parentUniverse = universe.getParentUniverse();
         IReportingParticipant _reportingParticipant = IReportingParticipant(msg.sender);
-        require(_parentUniverse.isContainerForReportingParticipant(_reportingParticipant));
+        require(parentUniverse.isContainerForReportingParticipant(_reportingParticipant));
         // simulate a 40% ROI which would have occured during a normal dispute had this participant's outcome won the dispute
         uint256 _bonus = _amountMigrated.mul(2) / 5;
         mint(address(_reportingParticipant), _bonus);
@@ -96,25 +94,29 @@ contract ReputationToken is VariableSupplyToken, IV2ReputationToken {
 
     function trustedUniverseTransfer(address _source, address _destination, uint256 _attotokens) public returns (bool) {
         require(IUniverse(msg.sender) == universe);
-        return internalNoHooksTransfer(_source, _destination, _attotokens);
+        _transfer(_source, _destination, _attotokens);
+        return true;
     }
 
     function trustedMarketTransfer(address _source, address _destination, uint256 _attotokens) public returns (bool) {
         require(universe.isContainerForMarket(IMarket(msg.sender)));
-        return internalNoHooksTransfer(_source, _destination, _attotokens);
+        _transfer(_source, _destination, _attotokens);
+        return true;
     }
 
     function trustedReportingParticipantTransfer(address _source, address _destination, uint256 _attotokens) public returns (bool) {
         require(universe.isContainerForReportingParticipant(IReportingParticipant(msg.sender)));
-        return internalNoHooksTransfer(_source, _destination, _attotokens);
+        _transfer(_source, _destination, _attotokens);
+        return true;
     }
 
     function trustedDisputeWindowTransfer(address _source, address _destination, uint256 _attotokens) public returns (bool) {
         require(universe.isContainerForDisputeWindow(IDisputeWindow(msg.sender)));
-        return internalNoHooksTransfer(_source, _destination, _attotokens);
+        _transfer(_source, _destination, _attotokens);
+        return true;
     }
 
-    function assertReputationTokenIsLegitSibling(IReputationToken _shadyReputationToken) private view {
+    function assertReputationTokenIsLegitChild(IReputationToken _shadyReputationToken) private view {
         IUniverse _universe = _shadyReputationToken.getUniverse();
         require(universe.isParentOf(_universe));
         require(_universe.getReputationToken() == _shadyReputationToken);
@@ -145,13 +147,13 @@ contract ReputationToken is VariableSupplyToken, IV2ReputationToken {
      * @return The maximum possible total supply for this version of REP.
      */
     function getTotalTheoreticalSupply() public view returns (uint256) {
-        uint256 _totalSupply = totalSupply();
+        uint256 _totalSupply = totalSupply;
         if (parentUniverse == IUniverse(0)) {
-            return Reporting.getInitialREPSupply().max(_totalSupply);
+            return _totalSupply.add(legacyRepToken.totalSupply()).sub(legacyRepToken.balanceOf(address(1))).sub(legacyRepToken.balanceOf(address(0)));
         } else if (augur.getTimestamp() >= parentUniverse.getForkEndTime()) {
             return _totalSupply;
         } else {
-            return _totalSupply + parentUniverse.getReputationToken().totalSupply();
+            return _totalSupply + parentUniverse.getReputationToken().getTotalTheoreticalSupply();
         }
     }
 
@@ -160,11 +162,11 @@ contract ReputationToken is VariableSupplyToken, IV2ReputationToken {
     }
 
     function onMint(address _target, uint256 _amount) internal {
-        augur.logReputationTokensMinted(universe, _target, _amount, totalSupply(), balances[_target]);
+        augur.logReputationTokensMinted(universe, _target, _amount, totalSupply, balances[_target]);
     }
 
     function onBurn(address _target, uint256 _amount) internal {
-        augur.logReputationTokensBurned(universe, _target, _amount, totalSupply(), balances[_target]);
+        augur.logReputationTokensBurned(universe, _target, _amount, totalSupply, balances[_target]);
     }
 
     /**

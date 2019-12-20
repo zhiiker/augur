@@ -31,7 +31,7 @@ import { windowRef } from 'utils/window-ref';
 import { AppState } from 'store';
 import { ThunkDispatch } from 'redux-thunk';
 import { Action } from 'redux';
-import { NodeStyleCallback, WindowApp } from 'modules/types';
+import { EnvObject, NodeStyleCallback, WindowApp } from "modules/types";
 import { augurSdk } from 'services/augursdk';
 import { listenForStartUpEvents } from 'modules/events/actions/listen-to-updates';
 import { loginWithInjectedWeb3 } from 'modules/auth/actions/login-with-injected-web3';
@@ -89,7 +89,8 @@ function pollForAccount(
                 setTimeout(() => {
                   dispatch(closeModal());
                 }),
-              message: `Syncing ${accountType} account...`,
+              message: `Connecting to our partners at ${accountType} to create your secure account.`,
+              showLearnMore: true,
               showCloseAfterDelay: true,
             })
           );
@@ -286,7 +287,7 @@ export function initAugur(
     dispatch: ThunkDispatch<void, any, Action>,
     getState: () => AppState
   ) => {
-    const env = networkConfig[`${process.env.ETHEREUM_NETWORK}`];
+    const env: EnvObject = networkConfig[`${process.env.ETHEREUM_NETWORK}`];
     console.log(env);
     env.useWeb3Transport = useWeb3Transport;
     env['ethereum-node'].http = ethereumNodeHttp

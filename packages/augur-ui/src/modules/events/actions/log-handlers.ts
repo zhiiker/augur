@@ -1,18 +1,13 @@
 import { Getters } from '@augurproject/sdk/build';
 import { updateAlert } from 'modules/alerts/actions/alerts';
 import {
-  loadMarketAccountPositions,
   loadAccountPositionsTotals,
+  loadMarketAccountPositions,
 } from 'modules/positions/actions/load-account-positions';
 import { loadMarketOrderBook } from 'modules/orders/actions/load-market-order-book';
-import {
-  removeMarket,
-  updateMarketsData,
-} from 'modules/markets/actions/update-markets-data';
+import { removeMarket, updateMarketsData, } from 'modules/markets/actions/update-markets-data';
 import { isCurrentMarket } from 'modules/trades/helpers/is-current-market';
-import {
-  loadMarketsInfo,
-} from 'modules/markets/actions/load-markets-info';
+import { loadMarketsInfo, } from 'modules/markets/actions/load-markets-info';
 import {
   loadMarketTradingHistory,
   loadUserFilledOrders,
@@ -30,37 +25,26 @@ import { addUpdateTransaction } from 'modules/events/actions/add-update-transact
 import { augurSdk } from 'services/augursdk';
 import { updateConnectionStatus } from 'modules/app/actions/update-connection';
 import { checkAccountAllowance } from 'modules/auth/actions/approve-account';
-import { IS_LOGGED, updateAuthStatus } from 'modules/auth/actions/auth-status';
-import { loadAccountData } from 'modules/auth/actions/load-account-data';
-import { loadAccountDataFromLocalStorage } from 'modules/auth/actions/load-account-data-from-local-storage';
 import {
   CANCELORDER,
-  PUBLICTRADE,
   CLAIMTRADINGPROCEEDS,
-  DOINITIALREPORT,
-  CREATEMARKET,
-  PUBLICFILLORDER,
   CONTRIBUTE,
+  CREATEMARKET,
+  DOINITIALREPORT,
+  PUBLICFILLORDER,
+  PUBLICTRADE,
 } from 'modules/common/constants';
 import { loadAccountReportingHistory } from 'modules/auth/actions/load-account-reporting';
 import { loadDisputeWindow } from 'modules/auth/actions/load-dispute-window';
-import {
-  isOnReportingPage,
-  isOnDisputingPage,
-} from 'modules/trades/helpers/is-on-page';
-import {
-  reloadReportingPage,
-  reloadDisputingPage,
-} from 'modules/reporting/actions/update-reporting-list';
-import { loadCreateMarketHistory } from 'modules/markets/actions/load-create-market-history';
+import { isOnDisputingPage, isOnReportingPage, } from 'modules/trades/helpers/is-on-page';
+import { reloadDisputingPage, reloadReportingPage, } from 'modules/reporting/actions/update-reporting-list';
 import { loadUniverseForkingInfo } from 'modules/universe/actions/load-forking-info';
 import { loadUniverseDetails } from 'modules/universe/actions/load-universe-details';
 import { getCategoryStats } from 'modules/create-market/actions/get-category-stats';
-import {
-  updateAppStatus,
-  GNOSIS_STATUS,
-} from 'modules/app/actions/update-app-status';
+import { GNOSIS_STATUS, updateAppStatus, } from 'modules/app/actions/update-app-status';
 import { GnosisSafeState } from '@augurproject/gnosis-relay-api/build/GnosisRelayAPI';
+import { loadAnalytics } from 'modules/app/actions/analytics-management';
+import { marketCreationCreated, orderFilled } from 'services/analytics/helpers';
 
 const handleAlert = (
   log: any,
@@ -106,6 +90,7 @@ export const handleTxSuccess = (txStatus: Events.TXStatus) => (
 ) => {
   console.log('TxSuccess Transaction', txStatus.transaction.name);
   dispatch(addUpdateTransaction(txStatus));
+  dispatch(updateAssets());
 };
 
 export const handleTxPending = (txStatus: Events.TXStatus) => (
@@ -132,33 +117,23 @@ export const handleGnosisStateUpdate = (response) => (
 };
 
 export const handleSDKReadyEvent = () => (
-  dispatch: ThunkDispatch<void, any, Action>
+  dispatch: ThunkDispatch<void, any, Action>,
+  getState: () => AppState
 ) => {
   // wire up events for sdk
   augurSdk.subscribe(dispatch);
+
   // app is connected when subscribed to sdk
   dispatch(updateConnectionStatus(true));
   dispatch(loadUniverseForkingInfo());
   dispatch(getCategoryStats())
 };
 
-export const handleUserDataSyncedEvent = (log: Events.UserDataSynced) => (
-  dispatch: ThunkDispatch<void, any, Action>,
-  getState: () => AppState
-) => {
-  const { loginAccount } = getState();
-  const { mixedCaseAddress, address } = loginAccount;
-  if (mixedCaseAddress && log.trackedUsers.includes(mixedCaseAddress)) {
-    dispatch(loadAccountDataFromLocalStorage(address));
-    dispatch(updateAuthStatus(IS_LOGGED, true));
-    dispatch(loadAccountData());
-  }
-};
-
 export const handleNewBlockLog = (log: Events.NewBlock) => (
   dispatch: ThunkDispatch<void, any, Action>,
   getState: () => AppState
 ) => {
+  const { blockchain } = getState();
   dispatch(
     updateBlockchain({
       currentBlockNumber: log.highestAvailableBlockNumber,
@@ -172,6 +147,7 @@ export const handleNewBlockLog = (log: Events.NewBlock) => (
   if (getState().authStatus.isLogged) {
     dispatch(updateAssets());
     dispatch(checkAccountAllowance());
+    dispatch(loadAnalytics(getState().analytics, blockchain.currentAugurTimestamp));
   }
 
   if (
@@ -218,7 +194,8 @@ export const handleMarketCreatedLog = (log: any) => (
   }
   if (isUserDataUpdate) {
     handleAlert(log, CREATEMARKET, false, dispatch, getState);
-    dispatch(loadCreateMarketHistory());
+    dispatch(marketCreationCreated(log.market, log.extraInfo));
+    dispatch(loadMarketsInfo([log.market]));
   }
 };
 
@@ -332,6 +309,7 @@ export const handleOrderFilledLog = (log: Logs.ParsedOrderEventLog) => (
     handleAlert(log, PUBLICFILLORDER, true, dispatch, getState);
     dispatch(loadUserFilledOrders({ marketId }));
     dispatch(loadAccountOpenOrders({ marketId }));
+    dispatch(orderFilled(marketId, log, isSameAddress(log.orderCreator, address)));
   }
   dispatch(loadMarketTradingHistory(marketId));
   if (isCurrentMarket(marketId)) dispatch(loadMarketOrderBook(marketId));

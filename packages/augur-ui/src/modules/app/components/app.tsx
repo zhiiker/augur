@@ -114,7 +114,7 @@ export default class AppView extends Component<AppProps> {
     },
   ];
 
-  UNSAFE_componentWillMount() {
+  handleComponentMount = () => {
     const {
       env,
       ethereumNodeHttp,
@@ -160,6 +160,7 @@ export default class AppView extends Component<AppProps> {
   }
 
   componentDidMount() {
+    this.handleComponentMount();
     window.addEventListener('resize', this.handleWindowResize);
 
     // Restyle all scrollbars on windows
@@ -169,7 +170,7 @@ export default class AppView extends Component<AppProps> {
     this.checkIsMobile();
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps: AppProps) {
+  componentDidUpdate(prevProps: AppProps) {
     const {
       isMobile,
       location,
@@ -177,16 +178,16 @@ export default class AppView extends Component<AppProps> {
       updateCurrentBasePath,
       updateMobileMenuState,
     } = this.props;
-    if (isMobile !== nextProps.isMobile) {
+    if (isMobile !== prevProps.isMobile) {
       updateMobileMenuState(MOBILE_MENU_STATES.CLOSED);
     }
-    if (universe.forkingInfo !== nextProps.universe.forkingInfo) {
-      this.sideNavMenuData[5].disabled = !!nextProps.universe.forkingInfo;
+    if (universe.forkingInfo !== prevProps.universe.forkingInfo) {
+      this.sideNavMenuData[5].disabled = !!prevProps.universe.forkingInfo;
     }
 
-    if (location !== nextProps.location) {
-      const lastBasePath = parsePath(location.pathname)[0];
-      const nextBasePath = parsePath(nextProps.location.pathname)[0];
+    if (location !== prevProps.location) {
+      const nextBasePath = parsePath(location.pathname)[0];
+      const lastBasePath = parsePath(prevProps.location.pathname)[0];
 
       if (lastBasePath !== nextBasePath) {
         updateCurrentBasePath(nextBasePath);
@@ -443,6 +444,7 @@ export default class AppView extends Component<AppProps> {
                 })}
                 onClick={this.mainSectionClickHandler}
                 role="presentation"
+                id={'mainContent'}
               >
                 <ForkingBanner />
 

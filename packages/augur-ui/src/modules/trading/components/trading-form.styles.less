@@ -1,0 +1,20 @@
+@import (reference) "~assets/styles/shared";
+
+.TradingForm {
+  background-color: @color-module-background;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  min-height: 575px;
+  position: relative;
+}
+
+@media @breakpoint-mobile {
+  .TradingForm {
+    flex-grow: 1;
+    margin-bottom: @size-8;
+    min-height: auto;
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+  }
+}

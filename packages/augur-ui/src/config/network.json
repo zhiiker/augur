@@ -8,6 +8,7 @@
       "connectionTimeout": 60000
     },
     "gnosis-relay": "http://localhost:8000/api/",
+    "0x-endpoint": "ws://localhost:60557",
     "universe": null,
     "debug": {
       "connect": true,
@@ -84,7 +85,8 @@
     "debug": {
       "connect": true,
       "broadcast": false
-    }
+    },
+    "0x-endpoint": "wss://kovan.augur.net/0x"
   },
   "srt": {
     "ethereum-node": {

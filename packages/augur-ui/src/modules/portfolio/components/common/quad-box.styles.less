@@ -1,12 +1,17 @@
 @import (reference) '~assets/styles/shared';
 
 .Quad {
-  background: @color-module-background;
+  background: @color-table-header;
   border: 1px solid @color-dark-grey;
   border-radius: @border-radius-default;
   color: @color-primary-text;
   flex: 1;
   min-height: 50%;
+
+  > * {
+    margin-left: 1px;
+    margin-right: 1px;
+  }
 
   @media @breakpoint-mobile-mid {
     background: unset;

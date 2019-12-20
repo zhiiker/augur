@@ -5,7 +5,10 @@ import { updateLoginAccount } from 'modules/account/actions/login-account';
 import { ThunkDispatch } from 'redux-thunk';
 import { Action } from 'redux';
 import { toChecksumAddress } from 'ethereumjs-util';
-import { updateAppStatus, GNOSIS_ENABLED } from 'modules/app/actions/update-app-status';
+import { updateAppStatus, GNOSIS_ENABLED, Ox_ENABLED } from 'modules/app/actions/update-app-status';
+import { loadAccountDataFromLocalStorage } from './load-account-data-from-local-storage';
+import { IS_LOGGED, updateAuthStatus } from 'modules/auth/actions/auth-status';
+import { loadAccountData } from 'modules/auth/actions/load-account-data';
 
 export const updateSdk = (
   loginAccount: Partial<LoginAccount>,
@@ -15,7 +18,15 @@ export const updateSdk = (
   if (!augurSdk.sdk) return;
 
   try {
-    const useGnosis = true;
+    const zeroXEnabled = augurSdk.sdk.zeroX;
+
+    if (zeroXEnabled === undefined) {
+      dispatch(updateAppStatus(Ox_ENABLED, false))
+    } else {
+      dispatch(updateAppStatus(Ox_ENABLED, true))
+    }
+
+    const useGnosis = window.localStorage.getItem('isGnosis');
 
     if (useGnosis) {
       const updateUserAccount = safeAddress => {
@@ -45,6 +56,10 @@ export const updateSdk = (
         false
       );
     }
+    dispatch(loadAccountDataFromLocalStorage(loginAccount.address));
+    dispatch(updateAuthStatus(IS_LOGGED, true));
+    dispatch(loadAccountData());
+
   } catch (error) {
     logError(error);
   }

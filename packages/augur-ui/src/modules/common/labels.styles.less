@@ -67,6 +67,10 @@
   color: inherit;
   z-index: @default-z-index;
 
+  &.DarkDash {
+    color: @color-secondary-text;
+  }
+
   > label {
     color: inherit;
     cursor: inherit;
@@ -93,11 +97,10 @@
 }
 
 .TextLabel {
+  .text-12;
+
   color: inherit;
-  font-size: @size-12;
-  font-weight: 400;
   letter-spacing: 0.3px;
-  line-height: @size-12;
   text-transform: capitalize;
   z-index: @default-z-index;
 
@@ -115,6 +118,31 @@
     max-width: 320px;
     padding: @size-12 @size-12 @size-8;
   }
+}
+
+.InvalidLabel {
+  color: @color-outcome-invalid;
+  display: flex;
+
+  > label {
+    margin-left: @size-8;
+    margin-bottom: 0;
+
+    > svg {
+      height: @size-12;
+      width: @size-12;
+
+      > circle {
+        stroke: @color-secondary-text;
+        fill: none;
+      }
+
+      > path {
+        fill: @color-secondary-text;
+      }
+    }
+  }
+
 }
 
 .HoverValueLabel {
@@ -273,7 +301,7 @@
 
   > span:nth-of-type(2),
   > span:last-of-type {
-    .mono-9;
+    .mono-10-medium;
 
     color: @color-primary-text;
     padding-left: @size-8;
@@ -292,9 +320,9 @@
 
   &.HighlightFirst {
     > span:first-of-type {
-      .mono-9-bold;
+      .mono-10-bold;
 
-      color: @color-inactive-text;
+      color: @color-secondary-text;
     }
   }
 
@@ -450,7 +478,7 @@ div.LinearPropertyViewTransaction {
 }
 
 .MarketStatus {
-  .mono-9;
+  .mono-9-bold;
 
   border: 1px solid transparent;
   color: @color-primary-text;
@@ -576,7 +604,7 @@ div.LinearPropertyViewTransaction {
 
 .MovementLabel_Text {
   &_small {
-    .mono-9;
+    .mono-9-bold;
   }
 
   &_normal {
@@ -662,6 +690,8 @@ div.LinearPropertyViewTransaction {
 }
 
 .PositionTypeLabel {
+  .mono-9-bold;
+
   color: @color-positive;
   font-weight: bold;
   text-transform: uppercase;

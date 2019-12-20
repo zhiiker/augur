@@ -23,7 +23,6 @@ const mergeProps = (sP: any, dP: any, oP: any) => {
   const unmatchedShares = getValue(openOrder, "unmatchedShares");
   const orderLabel =
     openOrder.description || openOrder.name || openOrder.outcomeName;
-
   const columnProperties = [
     {
       key: "orderName",
@@ -46,18 +45,22 @@ const mergeProps = (sP: any, dP: any, oP: any) => {
       key: "avgPrice",
       columnType: COLUMN_TYPES.VALUE,
       value: openOrder.avgPrice && avgPrice,
+      useFull: true,
       keyId: "openOrder-price-" + openOrder.id,
     },
     {
       key: "tokensEscrowed",
       columnType: COLUMN_TYPES.VALUE,
       value: tokensEscrowed,
+      useFull: true,
+      showEmptyDash: true,
       keyId: "openOrder-tokensEscrowed-" + openOrder.id,
     },
     {
       key: "sharesEscrowed",
       columnType: COLUMN_TYPES.VALUE,
       value: sharesEscrowed,
+      showEmptyDash: true,
       keyId: "openOrder-sharesEscrowed-" + openOrder.id,
     },
     {
@@ -66,6 +69,7 @@ const mergeProps = (sP: any, dP: any, oP: any) => {
       disabled: openOrder.pending,
       text: "Cancel",
       pending: openOrder.pending || openOrder.pendingOrder,
+      status: openOrder.status,
       action: (e: Event) => {
         e.stopPropagation();
         openOrder.cancelOrder(openOrder);

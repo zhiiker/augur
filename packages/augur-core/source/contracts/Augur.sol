@@ -19,6 +19,7 @@ import 'ROOT/trading/Order.sol';
 import 'ROOT/reporting/Reporting.sol';
 import 'ROOT/libraries/ContractExists.sol';
 import 'ROOT/ITime.sol';
+import 'ROOT/CashSender.sol';
 
 
 // Centralized approval authority and event emissions
@@ -27,7 +28,7 @@ import 'ROOT/ITime.sol';
  * @title Augur
  * @notice The core global contract of the Augur platform. Provides a contract registry and and authority on which contracts should be trusted.
  */
-contract Augur is IAugur, IAugurCreationDataGetter {
+contract Augur is IAugur, IAugurCreationDataGetter, CashSender {
     using SafeMathUint256 for uint256;
     using ContractExists for address;
 
@@ -41,7 +42,7 @@ contract Augur is IAugur, IAugurCreationDataGetter {
     event InitialReportSubmitted(address indexed universe, address indexed reporter, address indexed market, address initialReporter, uint256 amountStaked, bool isDesignatedReporter, uint256[] payoutNumerators, string description, uint256 nextWindowStartTime, uint256 nextWindowEndTime, uint256 timestamp);
     event DisputeCrowdsourcerCreated(address indexed universe, address indexed market, address disputeCrowdsourcer, uint256[] payoutNumerators, uint256 size, uint256 disputeRound);
     event DisputeCrowdsourcerContribution(address indexed universe, address indexed reporter, address indexed market, address disputeCrowdsourcer, uint256 amountStaked, string description, uint256[] payoutNumerators, uint256 currentStake, uint256 stakeRemaining, uint256 disputeRound, uint256 timestamp);
-    event DisputeCrowdsourcerCompleted(address indexed universe, address indexed market, address disputeCrowdsourcer, uint256[] payoutNumerators, uint256 nextWindowStartTime, uint256 nextWindowEndTime, bool pacingOn, uint256 totalRepStakedInPayout, uint256 totalRepStakedInMarket, uint256 disputeRound);
+    event DisputeCrowdsourcerCompleted(address indexed universe, address indexed market, address disputeCrowdsourcer, uint256[] payoutNumerators, uint256 nextWindowStartTime, uint256 nextWindowEndTime, bool pacingOn, uint256 totalRepStakedInPayout, uint256 totalRepStakedInMarket, uint256 disputeRound, uint256 timestamp);
     event InitialReporterRedeemed(address indexed universe, address indexed reporter, address indexed market, address initialReporter, uint256 amountRedeemed, uint256 repReceived, uint256[] payoutNumerators, uint256 timestamp);
     event DisputeCrowdsourcerRedeemed(address indexed universe, address indexed reporter, address indexed market, address disputeCrowdsourcer, uint256 amountRedeemed, uint256 repReceived, uint256[] payoutNumerators, uint256 timestamp);
     event ReportingParticipantDisavowed(address indexed universe, address indexed market, address reportingParticipant);
@@ -69,10 +70,12 @@ contract Augur is IAugur, IAugurCreationDataGetter {
     event ReportingFeeChanged(address indexed universe, uint256 reportingFee);
     event ShareTokenBalanceChanged(address indexed universe, address indexed account, address indexed market, uint256 outcome, uint256 balance);
 
+    event RegisterContract(address contractAddress, bytes32 key);
+    event FinishDeployment();
+
     mapping(address => bool) private markets;
     mapping(address => bool) private universes;
     mapping(address => bool) private crowdsourcers;
-    mapping(address => bool) private shareTokens;
     mapping(address => bool) private trustedSender;
 
     mapping(address => MarketCreationData) private marketCreationData;
@@ -86,7 +89,7 @@ contract Augur is IAugur, IAugurCreationDataGetter {
     uint256 public forkCounter;
     mapping (address => uint256) universeForkIndex;
 
-    uint256 public upgradeTimestamp;
+    uint256 public upgradeTimestamp = Reporting.getInitialUpgradeTimestamp();
 
     int256 private constant DEFAULT_MIN_PRICE = 0;
     int256 private constant DEFAULT_MAX_PRICE = 1 ether;
@@ -98,7 +101,6 @@ contract Augur is IAugur, IAugurCreationDataGetter {
 
     constructor() public {
         uploader = msg.sender;
-        upgradeTimestamp = Reporting.getInitialUpgradeTimestamp();
     }
 
     //
@@ -111,10 +113,14 @@ contract Augur is IAugur, IAugurCreationDataGetter {
         registry[_key] = _address;
         if (_key == "ShareToken" || _key == "MarketFactory") {
             trustedSender[_address] = true;
-        }
-        if (_key == "Time") {
+        } else if (_key == "Time") {
             time = ITime(_address);
+        } else if (_key == "DaiVat") {
+            vat = IDaiVat(_address);
+        } else if (_key == "Cash") {
+            cash = ICash(_address);
         }
+        emit RegisterContract(_address, _key);
         return true;
     }
 
@@ -129,6 +135,7 @@ contract Augur is IAugur, IAugurCreationDataGetter {
 
     function finishDeployment() public onlyUploader returns (bool) {
         uploader = address(1);
+        emit FinishDeployment();
         return true;
     }
 
@@ -188,9 +195,9 @@ contract Augur is IAugur, IAugurCreationDataGetter {
     // Transfer
     //
 
-    function trustedTransfer(IERC20 _token, address _from, address _to, uint256 _amount) public returns (bool) {
+    function trustedCashTransfer(address _from, address _to, uint256 _amount) public returns (bool) {
         require(trustedSender[msg.sender]);
-        require(_token.transferFrom(_from, _to, _amount));
+        cashTransferFrom(_from, _to, _amount);
         return true;
     }
 
@@ -255,7 +262,7 @@ contract Augur is IAugur, IAugurCreationDataGetter {
     // Logging
     //
 
-    function logCategoricalMarketCreated(uint256 _endTime, string memory _extraInfo, IMarket _market, address _marketCreator, address _designatedReporter, uint256 _feePerCashInAttoCash, bytes32[] memory _outcomes) public returns (bool) {
+    function onCategoricalMarketCreated(uint256 _endTime, string memory _extraInfo, IMarket _market, address _marketCreator, address _designatedReporter, uint256 _feePerCashInAttoCash, bytes32[] memory _outcomes) public returns (bool) {
         IUniverse _universe = getAndValidateUniverse(msg.sender);
         markets[address(_market)] = true;
         int256[] memory _prices = new int256[](2);
@@ -269,7 +276,7 @@ contract Augur is IAugur, IAugurCreationDataGetter {
         return true;
     }
 
-    function logYesNoMarketCreated(uint256 _endTime, string memory _extraInfo, IMarket _market, address _marketCreator, address _designatedReporter, uint256 _feePerCashInAttoCash) public returns (bool) {
+    function onYesNoMarketCreated(uint256 _endTime, string memory _extraInfo, IMarket _market, address _marketCreator, address _designatedReporter, uint256 _feePerCashInAttoCash) public returns (bool) {
         IUniverse _universe = getAndValidateUniverse(msg.sender);
         markets[address(_market)] = true;
         int256[] memory _prices = new int256[](2);
@@ -282,7 +289,7 @@ contract Augur is IAugur, IAugurCreationDataGetter {
         return true;
     }
 
-    function logScalarMarketCreated(uint256 _endTime, string memory _extraInfo, IMarket _market, address _marketCreator, address _designatedReporter, uint256 _feePerCashInAttoCash, int256[] memory _prices, uint256 _numTicks)  public returns (bool) {
+    function onScalarMarketCreated(uint256 _endTime, string memory _extraInfo, IMarket _market, address _marketCreator, address _designatedReporter, uint256 _feePerCashInAttoCash, int256[] memory _prices, uint256 _numTicks)  public returns (bool) {
         IUniverse _universe = getAndValidateUniverse(msg.sender);
         require(_prices.length == 2);
         require(_prices[0] < _prices[1]);
@@ -312,7 +319,7 @@ contract Augur is IAugur, IAugurCreationDataGetter {
     function logDisputeCrowdsourcerCompleted(IUniverse _universe, address _market, address _disputeCrowdsourcer, uint256[] memory _payoutNumerators, uint256 _nextWindowStartTime, uint256 _nextWindowEndTime, bool _pacingOn, uint256 _totalRepStakedInPayout, uint256 _totalRepStakedInMarket, uint256 _disputeRound) public returns (bool) {
         require(isKnownUniverse(_universe));
         require(_universe.isContainerForMarket(IMarket(msg.sender)));
-        emit DisputeCrowdsourcerCompleted(address(_universe), _market, _disputeCrowdsourcer, _payoutNumerators, _nextWindowStartTime, _nextWindowEndTime, _pacingOn, _totalRepStakedInPayout, _totalRepStakedInMarket, _disputeRound);
+        emit DisputeCrowdsourcerCompleted(address(_universe), _market, _disputeCrowdsourcer, _payoutNumerators, _nextWindowStartTime, _nextWindowEndTime, _pacingOn, _totalRepStakedInPayout, _totalRepStakedInMarket, _disputeRound, getTimestamp());
         return true;
     }
 

@@ -1,4 +1,5 @@
 import { ethers } from 'ethers';
+import { BigNumber } from 'ethers/utils';
 export const REQUIRED = 'REQUIRED';
 export const CHOICE = 'CHOICE';
 // Market templates
@@ -157,6 +158,11 @@ export interface TemplateInput {
   }
 }
 
+export interface RetiredTemplate {
+  hash: string;
+  autoFail: boolean;
+}
+
 export enum ValidationType {
   WHOLE_NUMBER = 'WHOLE_NUMBER',
   NUMBER = 'NUMBER',
@@ -166,6 +172,7 @@ export enum TemplateInputType {
   TEXT = 'TEXT', // simple text input in market question
   DATEYEAR = 'DATEYEAR', // date picker in market question
   DATETIME = 'DATETIME', // date time with timezone picker
+  DATESTART = 'DATESTART',
   ESTDATETIME = 'ESTDATETIME', // estimated scheduled start time date time picker with timezone
   DROPDOWN = 'DROPDOWN', // dropdown list, found in market question
   DENOMINATION_DROPDOWN = 'DENOMINATION_DROPDOWN', // list of denomination values for scalar market
@@ -210,6 +217,7 @@ export const ValidationTemplateInputType = {
 };
 
 export let TEMPLATE_VALIDATIONS = {};
+export let RETIRED_TEMPLATES = [];
 
 function hasSubstituteOutcomes(
   inputs: ExtraInfoTemplateInput[],
@@ -301,36 +309,95 @@ function isDependencyOutcomesCorrect(
   return result;
 }
 
-export const isTemplateMarket = (title, template: ExtraInfoTemplate, outcomes: string[], longDescription: string) => {
-  if (!template || !template.hash || !template.question || template.inputs.length === 0) return false;
+function estimatedDateTimeAfterMarketEndTime(inputs: ExtraInfoTemplateInput[], endTime: number) {
+  const input = inputs.find(i => i.type === TemplateInputType.ESTDATETIME);
+  if (!input) return false;
+  return Number(input.timestamp) >= Number(endTime);
+}
+
+function dateStartAfterMarketEndTime(inputs: ExtraInfoTemplateInput[], endTime: number) {
+  const input = inputs.find(i => i.type === TemplateInputType.DATESTART);
+  if (!input) return false;
+  return Number(input.timestamp) >= Number(endTime);
+}
+
+function isRetiredAutofail(hash:string) {
+  const found: RetiredTemplate = RETIRED_TEMPLATES.find((t: RetiredTemplate) => t.hash === hash);
+  if (!found) return false;
+  return found.autoFail;
+}
+
+export const isTemplateMarket = (title, template: ExtraInfoTemplate, outcomes: string[], longDescription: string, endTime: string, errors: string[] = []) => {
+  if (!template || !template.hash || !template.question || template.inputs.length === 0 || !endTime) {
+    errors.push('value missing template | hash | question | inputs | endTime');
+    return false;
+  }
 
   try {
+    if (isRetiredAutofail(template.hash)){
+      errors.push('template hash has been retired and set to auto-fail');
+      return false;
+    }
+
     const validation = TEMPLATE_VALIDATIONS[template.hash] as TemplateValidation;
-    if (!!!validation) return false;
+    if (!!!validation) {
+      errors.push('no validation found for hash');
+      return false;
+    }
 
     // check market title/question matches built template question
     let checkMarketTitle = template.question;
     template.inputs.map((i: ExtraInfoTemplateInput) => {
       checkMarketTitle = checkMarketTitle.replace(`[${i.id}]`, i.value);
     });
-    if (checkMarketTitle !== title) return false;
+    if (checkMarketTitle !== title) {
+      errors.push('populated title does not match title given');
+      return false;
+    }
+
+    // check ESTDATETIME isn't after market event expiration
+    if (estimatedDateTimeAfterMarketEndTime(template.inputs, new BigNumber(endTime).toNumber())) {
+      errors.push('estimated schedule date time is after market event expiration endTime');
+      return false;
+    }
+
+    // check DATESTART isn't after market event expiration
+    if (dateStartAfterMarketEndTime(template.inputs, new BigNumber(endTime).toNumber())) {
+      errors.push('start date is after market event expiration endTime');
+      return false;
+    }
 
     // check for input duplicates
     const values = template.inputs.map((i: ExtraInfoTemplateInput) => i.value);
-    if (new Set(values).size !== values.length) return false;
+    if (new Set(values).size !== values.length) {
+      errors.push('template input values have duplicates');
+      return false;
+    }
 
     // check for outcome duplicates
     const outcomeValues = convertOutcomes(outcomes);
-    if (new Set(outcomeValues).size !== outcomeValues.length) return false;
+    if (new Set(outcomeValues).size !== outcomeValues.length) {
+      errors.push('outcome array has duplicates');
+      return false;
+    }
 
     // reg ex to verify market question dropdown values and inputs
-    if (!isValidTemplateMarket(validation.templateValidation, checkMarketTitle)) return false;
+    if (!isValidTemplateMarket(validation.templateValidation, checkMarketTitle)) {
+      errors.push('populated market question does not match regex');
+      return false;
+    }
 
     // check that required outcomes exist
-    if (!hasRequiredOutcomes(validation.requiredOutcomes, outcomeValues)) return false;
+    if (!hasRequiredOutcomes(validation.requiredOutcomes, outcomeValues)) {
+      errors.push('required outcomes are missing');
+      return false;
+    }
 
     // check that dropdown dep values are correct
-    if (!hasMarketQuestionDependencies(validation.marketQuestionDependencies, template.inputs)) return false;
+    if (!hasMarketQuestionDependencies(validation.marketQuestionDependencies, template.inputs)) {
+      errors.push('market question dropdown dependencies values are incorrect');
+      return false;
+    }
 
     if (validation.outcomeDependencies !== null) {
       if (
@@ -340,19 +407,33 @@ export const isTemplateMarket = (title, template: ExtraInfoTemplate, outcomes: s
           template.inputs,
           outcomeValues
         )
-      )
+      ){
+        errors.push('outcome dependencies are incorrect');
         return false;
+      }
     }
 
-    if (!hasSubstituteOutcomes(template.inputs, validation.substituteDependencies, outcomeValues)) return false;
+    if (!hasSubstituteOutcomes(template.inputs, validation.substituteDependencies, outcomeValues)) {
+      errors.push('outcomes values from substituted market question inputs are incorrect');
+      return false;
+    }
     // verify resolution rules
     const marketResolutionRules = hashResolutionRules(longDescription);
-    if (marketResolutionRules !== validation.templateValidationResRules) return false;
+    if (marketResolutionRules !== validation.templateValidationResRules) {
+      errors.push('hash of resolution details is different than validation resolution rules hash');
+      return false;
+    }
+
+   return true;
+
   } catch (e) {
     console.error(e);
+    errors.push(e);
+    return false;
   }
-  return true;
 };
+
+//##RETIRED_TEMPLATES
 
 //##TEMPLATES##
 

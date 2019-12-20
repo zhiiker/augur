@@ -2,26 +2,17 @@ import { Addresses } from '@augurproject/artifacts';
 
 import { EthersProvider } from '@augurproject/ethersjs-provider';
 import { GnosisRelayAPI } from '@augurproject/gnosis-relay-api';
-import {
-  Augur,
-  CalculateGnosisSafeAddressParams,
-  Connectors,
-  Provider,
-} from '@augurproject/sdk';
+import { Augur, CalculateGnosisSafeAddressParams, Connectors, Provider, } from '@augurproject/sdk';
 import { EthersSigner } from 'contract-dependencies-ethers';
 
 import { ContractDependenciesGnosis } from 'contract-dependencies-gnosis';
 import { JsonRpcProvider } from 'ethers/providers';
-import {
-  listenToUpdates,
-  unListenToEvents,
-} from 'modules/events/actions/listen-to-updates';
+import { listenToUpdates, unListenToEvents, } from 'modules/events/actions/listen-to-updates';
 import { EnvObject } from 'modules/types';
 import { isEmpty } from 'utils/is-empty';
-import { isMobileSafari } from 'utils/is-safari';
 import { analytics } from './analytics';
-import { WebWorkerConnector } from './ww-connector';
 import { isLocalHost } from 'utils/is-localhost';
+import { WebWorkerConnector } from 'services/ww-connector';
 
 export class SDK {
   sdk: Augur<Provider> | null = null;
@@ -67,12 +58,19 @@ export class SDK {
       account,
     );
 
+    const enableFlexSearch = false; // TODO configurable
+    // const meshClient = env['0x-endpoint'] ? new WSClient(env['0x-endpoint']) : undefined;
+    const meshBrowser = undefined; // TODO configurable
+
     this.sdk = await Augur.create<Provider>(
       ethersProvider,
       contractDependencies,
       Addresses[this.networkId],
       connector,
       gnosisRelay,
+      enableFlexSearch,
+      undefined, // TODO - Enable when we fix relayer errors
+      meshBrowser,
     );
 
     if (!isEmpty(account)) {
@@ -132,16 +130,8 @@ export class SDK {
         this.sdk.setUseGnosisSafe(true);
         this.sdk.setUseGnosisRelay(true);
         this.sdk.setGnosisSafeAddress(safeAddress);
-
-        console.log('SYNC [safe] USER data', safeAddress);
-        this.sdk.syncUserData(safeAddress);
         updateUser(safeAddress);
       }
-      else {
-        console.log('SYNC [non-safe] USER data', address);
-        this.sdk.syncUserData(address);
-      }
-
     }
   }
 
@@ -155,8 +145,6 @@ export class SDK {
   pickConnector(sdkEndpoint: string) {
     if (sdkEndpoint) {
       return new Connectors.WebsocketConnector(sdkEndpoint);
-    } else if (isMobileSafari()) {
-      return new Connectors.SEOConnector()
     } else {
       return new WebWorkerConnector();
     }

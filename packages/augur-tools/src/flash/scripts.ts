@@ -28,6 +28,7 @@ import { dispute } from './dispute';
 import { MarketList } from '@augurproject/sdk/build/state/getter/Markets';
 import { generateTemplateValidations } from './generate-templates';
 import { spawn } from 'child_process';
+import { showTemplateByHash, validateMarketTemplate } from './template-utils';
 
 export function addScripts(flash: FlashSession) {
   flash.addScript({
@@ -139,15 +140,57 @@ export function addScripts(flash: FlashSession) {
       if (this.noProvider()) return;
       const user = await this.ensureUser();
 
-      const target = String(args.target);
       const amount = Number(args.amount);
       const atto = new BigNumber(amount).times(_1_ETH);
 
       await user.faucet(atto);
 
       // if we have a target we transfer from current account to target.
-      if(target) {
-        await user.augur.contracts.cash.transfer(target, atto);
+      if(args.target) {
+        await user.augur.contracts.cash.transfer(String(args.target), atto);
+      }
+    },
+  });
+
+  flash.addScript({
+    name: 'transfer',
+    description: 'Transfer tokens to account',
+    options: [
+      {
+        name: 'amount',
+        abbr: 'a',
+        description: 'Quantity',
+        required: true,
+      },
+      {
+        name: 'token',
+        abbr: 'k',
+        description: 'REP, ETH, DAI',
+        required: true,
+      },
+      {
+        name: 'target',
+        abbr: 't',
+        description: 'Account to send funds (defaults to current user)',
+        required: false
+      }
+    ],
+    async call(this: FlashSession, args: FlashArguments) {
+      if (this.noProvider()) return;
+      const user = await this.ensureUser();
+
+      const target = String(args.target);
+      const amount = Number(args.amount);
+      const token = String(args.token);
+      const atto = new BigNumber(amount).times(_1_ETH);
+
+      switch(token) {
+        case 'REP':
+          return await user.augur.contracts.getReputationToken().transfer(target, atto);
+        case 'ETH':
+          return await user.augur.sendETH(target, atto);
+        default:
+          return await user.augur.contracts.cash.transfer(target, atto);
       }
     },
   });
@@ -162,6 +205,12 @@ export function addScripts(flash: FlashSession) {
         description: 'Quantity of REP.',
         required: true,
       },
+      {
+        name: 'target',
+        abbr: 't',
+        description: 'Account to send funds (defaults to current user)',
+        required: false
+      }
     ],
     async call(this: FlashSession, args: FlashArguments) {
       if (this.noProvider()) return;
@@ -170,6 +219,11 @@ export function addScripts(flash: FlashSession) {
       const atto = new BigNumber(amount).times(_1_ETH);
 
       await user.repFaucet(atto);
+
+      // if we have a target we transfer from current account to target.
+      if(args.target) {
+        await user.augur.contracts.reputationToken.transfer(String(args.target), atto);
+      }
     },
   });
 
@@ -216,13 +270,51 @@ export function addScripts(flash: FlashSession) {
   });
 
   flash.addScript({
+    name: 'new-market',
+    options: [
+      {
+        name: 'yesno',
+        abbr: 'y',
+        description: 'create yes no market, default if no options are added',
+        flag: true,
+      },
+      {
+        name: 'categorical',
+        abbr: 'c',
+        description: 'create categorical market',
+        flag: true,
+      },
+      {
+        name: 'scalar',
+        abbr: 's',
+        description: 'create scalar market',
+        flag: true,
+      },
+    ],
+    async call(this: FlashSession, args: FlashArguments) {
+      const yesno = args.yesno as boolean;
+      const cat = args.categorical as boolean;
+      const scalar = args.scalar as boolean;
+      if (yesno)
+        await this.call('create-reasonable-yes-no-market', {});
+      if (cat)
+        await this.call('create-reasonable-categorical-market', {outcomes: "first,second,third,fourth,fifth"});
+      if (scalar)
+        await this.call('create-reasonable-scalar-market', {});
+
+      if (!yesno && !cat && !scalar)
+        await this.call('create-reasonable-yes-no-market', {});
+    }
+  });
+
+  flash.addScript({
     name: 'create-reasonable-yes-no-market',
     async call(this: FlashSession) {
       if (this.noProvider()) return;
       const user = await this.ensureUser();
 
       this.market = await user.createReasonableYesNoMarket();
-      this.log(`Created market "${this.market.address}".`);
+      this.log(`Created YesNo market "${this.market.address}".`);
       return this.market;
     },
   });
@@ -245,7 +337,7 @@ export function addScripts(flash: FlashSession) {
         .map(formatBytes32String);
 
       this.market = await user.createReasonableMarket(outcomes);
-      this.log(`Created market "${this.market.address}".`);
+      this.log(`Created Categorical market "${this.market.address}".`);
       return this.market;
     },
   });
@@ -257,7 +349,7 @@ export function addScripts(flash: FlashSession) {
       const user = await this.ensureUser();
 
       this.market = await user.createReasonableScalarMarket();
-      this.log(`Created market "${this.market.address}".`);
+      this.log(`Created Scalar market "${this.market.address}".`);
       return this.market;
     },
   });
@@ -526,6 +618,72 @@ export function addScripts(flash: FlashSession) {
     async call(this: FlashSession) {
       generateTemplateValidations();
       this.log('Generated Templates to augur-artifacts\n');
+    },
+  });
+
+  flash.addScript({
+    name: 'show-template',
+    options: [
+      {
+        name: 'hash',
+        description: 'Hash value of template to show',
+        required: true,
+      },
+    ],
+    async call(this: FlashSession, args: FlashArguments) {
+      try {
+        const hash = String(args.hash);
+        this.log(hash);
+        const template = showTemplateByHash(hash);
+        if (!template) this.log(`Template not found for hash ${hash}`);
+        this.log(JSON.stringify(template, null, ' '));
+      } catch (e) {
+        this.log(e);
+      }
+    },
+  });
+
+  flash.addScript({
+    name: 'validate-template',
+    options: [
+      {
+        name: 'title',
+        description: 'populated market title',
+        required: true,
+      },
+      {
+        name: 'templateInfo',
+        description: 'string version of template information from market creation extraInfo, it will be parsed as object internally',
+        required: true,
+      },
+      {
+        name: 'outcomes',
+        description: 'string array of outcomes if market is categorical',
+        required: false,
+      },
+      {
+        name: 'resolutionRules',
+        description: 'resolution rules separated by \n ',
+        required: true,
+      },
+      {
+        name: 'endTime',
+        description: 'market end time, also called event expiration',
+        required: true,
+      }
+    ],
+    async call(this: FlashSession, args: FlashArguments) {
+      try {
+        const title = String(args.title);
+        const templateInfo = String(args.templateInfo);
+        const outcomesString = String(args.outcomes);
+        const resolutionRules = String(args.resolutionRules);
+        const endTime = Number(args.endTime);
+        this.log(validateMarketTemplate(title, templateInfo, outcomesString, resolutionRules, endTime));
+
+      } catch (e) {
+        this.log(e);
+      }
     },
   });
 
@@ -979,63 +1137,15 @@ export function addScripts(flash: FlashSession) {
   });
 
   flash.addScript({
-    name: '0x-docker',
-    async call(this: FlashSession) {
+    name: 'network-id',
+    async call(this: FlashSession): Promise<string> {
       if (this.noProvider()) return null;
-
       const networkId = await this.provider.getNetworkId();
-      const ethNode = this.network.http;
-      const addresses = Addresses[networkId];
-
-      // We set --net=host so that 0x mesh docker can talk to the host, where
-      // the ethnode is being run. It might be elsewhere in non-dev deployments.
-      // This is also making the '-p', options unnecessary.
-
-      console.log('Starting 0x mesh');
-      const mesh = spawn('docker', [
-        'run',
-        '--rm',
-        '-p', '60557:60557',
-        '-p', '60558:60558',
-        '-p', '60559:60559',
-        '-e', 'ETHEREUM_NETWORK_ID=42', // doesn't understand atypical network ids
-        '--net=host',
-        '-e', `ETHEREUM_RPC_URL=${ethNode}`,
-        '-e', 'USE_BOOTSTRAP_LIST=false',
-        '-e', 'BLOCK_POLLING_INTERVAL=1s',
-        `-e', 'CUSTOM_CONTRACT_ADDRESSES='${JSON.stringify(addresses)}'`,
-        '-e', 'VERBOSITY=5',
-        '0xorg/mesh:latest',
-      ]);
-
-      mesh.on('error', console.error);
-      mesh.on('exit', (code, signal) => {
-        console.log(`Exiting 0x mesh with code=${code} and signal=${signal}`)
-      });
-      mesh.stdout.on('data', (data) => {
-        console.log(data.toString());
-      });
-      mesh.stderr.on('data', (data) => {
-        console.error(data.toString());
-      });
-    },
-  })
-  flash.addScript({
-    name: 'get-contract-address',
-    options: [
-      {
-        name: 'name',
-        abbr: 'n',
-        description: 'Name of contract',
-      },
-    ],
-    async call(
-      this: FlashSession,
-      args: FlashArguments
-    ): Promise<void> {
-      console.log(this.contractAddresses[args['name'] as string]);
+      console.log(networkId);
+      return networkId;
     },
   });
+
   flash.addScript({
     name: 'check-safe-registration',
     options: [
@@ -1054,6 +1164,26 @@ export function addScripts(flash: FlashSession) {
 
       const result = await user.augur.contracts.gnosisSafeRegistry.getSafe_(args['target'] as string);
       console.log(result);
+  }});
+
+  flash.addScript({
+    name: 'get-safe-nonce',
+    options: [
+      {
+        name: 'target',
+        abbr: 't',
+        description: 'address to check registry contract for the safe address.',
+      },
+    ],
+    async call(
+      this: FlashSession,
+      args: FlashArguments
+    ): Promise<void> {
+      if (this.noProvider()) return null;
+      const user = await this.ensureUser(this.network, false);
+      const gnosisSafe = await user.augur.contracts.gnosisSafeFromAddress(args['target'] as string);
+
+      console.log((await gnosisSafe.nonce_()).toString());
   }});
 
   flash.addScript({
@@ -1084,7 +1214,8 @@ export function addScripts(flash: FlashSession) {
         '-e', `CUSTOM_CONTRACT_ADDRESSES=${JSON.stringify(addresses)}`,
         '-e', 'VERBOSITY=4', // 5=debug 6=trace
         '-e', 'RPC_ADDR=0x:60557', // need to use "0x" network
-        '0xorg/mesh:7.1.1-beta-0xv3', // TODO update this until we hit a stable release
+        // '0xorg/mesh:7.1.1-beta-0xv3',
+        '0xorg/mesh:0xV3',
       ]);
 
       mesh.on('error', console.error);
@@ -1098,6 +1229,48 @@ export function addScripts(flash: FlashSession) {
         console.error(data.toString());
       });
     },
-  })
+  });
 
+  flash.addScript({
+    name: 'get-contract-address',
+    options: [
+      {
+        name: 'name',
+        abbr: 'n',
+        description: 'Name of contract',
+        required: true,
+      },
+    ],
+    async call(
+      this: FlashSession,
+      args: FlashArguments
+    ): Promise<string> {
+      const name = args.name as string;
+      const address = this.contractAddresses[name];
+      console.log(address);
+      return address;
+    },
+  });
+
+    flash.addScript({
+    name: 'get-all-contract-addresses',
+    options: [
+      {
+        name: 'ugly',
+        abbr: 'u',
+        description: 'print the addresses json as a blob instead of nicely formatted',
+        flag: true,
+      },
+    ],
+    async call(this: FlashSession, args: FlashArguments) {
+      const ugly = args.ugly as boolean;
+      if (this.noProvider()) return;
+
+      if (ugly) {
+        console.log(JSON.stringify(this.contractAddresses))
+      } else {
+        console.log(JSON.stringify(this.contractAddresses, null, 2))
+      }
+    },
+  });
 }

@@ -11,6 +11,7 @@ import { NameValuePair } from 'modules/portfolio/types';
 import {
   TEMPLATES,
   TEMPLATE_VALIDATIONS,
+  RETIRED_TEMPLATES,
   Categories,
   Template,
   TemplateInput,
@@ -20,15 +21,25 @@ import {
   REQUIRED,
   CHOICE,
 } from '@augurproject/artifacts';
+import { YesNoMarketIcon, CategoricalMarketIcon, ScalarMarketIcon } from 'modules/common/icons';
+import { YES_NO, CATEGORICAL, SCALAR } from 'modules/common/constants';
+
+const MarketTypeIcons = {
+  [YES_NO]: YesNoMarketIcon,
+  [CATEGORICAL]: CategoricalMarketIcon,
+  [SCALAR]: ScalarMarketIcon,
+};
 
 export const getTemplateRadioCardsMarketTypes = (categories: Categories) => {
   if (!categories || !categories.primary) return MARKET_TYPE_TEMPLATES;
   const templates = getTemplatesPerSubcategory(categories, false);
   if (!templates) return [];
+  //const icon = MarketTypeIcons[t.marketType];
   const marketTypes = templates.reduce((p, t) => [...p, t.marketType], []);
   return [...new Set(marketTypes)].map(m =>
     MARKET_TYPE_TEMPLATES.find(t => t.value === m)
-  );
+  )
+  .map(i => ({...i, icon: MarketTypeIcons[i.value]}));
 };
 
 export const getTemplatesByTertiaryMarketTypes = (categories: Categories) => {
@@ -218,7 +229,11 @@ const getTemplatesByMarketType = (
   marketType
 ) => {
   const values = categoryTemplates.filter(t => t.marketType === marketType);
-  return deepClone<Template[]>(values);
+  const viewable = values.reduce(
+    (p, v) => (RETIRED_TEMPLATES.find(r => r.hash === v.hash) ? p : [...p, v]),
+    []
+  );
+  return deepClone<Template[]>(viewable);
 };
 
 export const getTemplateReadableDescription = (template: Template) => {

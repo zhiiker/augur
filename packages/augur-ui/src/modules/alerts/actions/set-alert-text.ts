@@ -55,7 +55,7 @@ import { isSameAddress } from 'utils/isSameAddress';
 function toCapitalizeCase(label) {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
-function getInfo(params: any, status: string, marketInfo: MarketData) {
+export function getInfo(params: any, status: string, marketInfo: MarketData) {
   const outcome = new BigNumber(params.outcome || params._outcome).toString();
   const outcomeDescription = getOutcomeNameWithOutcome(marketInfo, outcome);
   let orderType = params.orderType === BUY_INDEX ? BUY : SELL;
@@ -111,7 +111,7 @@ export default function setAlertText(alert: any, callback: Function) {
     }
 
     const marketId = alert.params.market || alert.params._market;
-
+    if (!marketId) return;
     switch (alert.name.toUpperCase()) {
       // CancelOrder
       case CANCELORDER: {

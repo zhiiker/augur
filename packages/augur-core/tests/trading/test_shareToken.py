@@ -13,6 +13,26 @@ def test_init(contractsFixture, market):
 
     assert shareToken.getTypeName() == stringToBytes("ShareToken")
 
+def test_bad_input_to_trade_functions(contractsFixture, universe, market, cash):
+    shareToken = contractsFixture.contracts["ShareToken"]
+
+    cost = 10 * market.getNumTicks()
+    account = contractsFixture.accounts[1]
+    cash.faucet(cost, sender=account)
+
+    # cant provide an invalid outcome
+    with raises(TransactionFailed):
+        shareToken.buyCompleteSetsForTrade(market.address, 10, 257, account, account, sender = account)
+
+    shareToken.buyCompleteSetsForTrade(market.address, 10, 1, account, account, sender = account)
+
+    # can't provide an invalid market
+    shareToken.setApprovalForAll(contractsFixture.accounts[0], True, sender=account)
+    with raises(TransactionFailed):
+        shareToken.sellCompleteSetsForTrade(nullAddress, 1, 10, account, account, account, account, 4, account, longTo32Bytes(11))
+
+    shareToken.sellCompleteSetsForTrade(market.address, 1, 10, account, account, account, account, 4, account, longTo32Bytes(11))
+
 def test_safeTransferFrom(contractsFixture, universe, market, cash):
     shareToken = contractsFixture.contracts['ShareToken']
 
@@ -105,7 +125,7 @@ def test_publicBuyCompleteSets(contractsFixture, universe, cash, market):
     assert shareToken.totalSupplyForMarketOutcome(market.address, NO) == 10, "Increase in yes shares purchased for this market should be 10"
     assert universe.getOpenInterestInAttoCash() == cost, "Open interest in the universe increases by the cost in ETH of the sets purchased"
 
-def test_publicSellCompleteSets(contractsFixture, universe, cash, market, tokensFail):
+def test_publicSellCompleteSets(contractsFixture, universe, cash, market):
     orders = contractsFixture.contracts['Orders']
     shareToken = contractsFixture.contracts["ShareToken"]
 
@@ -120,7 +140,6 @@ def test_publicSellCompleteSets(contractsFixture, universe, cash, market, tokens
     shareToken.buyCompleteSets(market.address, account, 10)
     assert universe.getOpenInterestInAttoCash() == 10 * market.getNumTicks()
 
-    tokensFail.setFail(True)
     completeSetsSoldLog = {
         "universe": universe.address,
         "market": market.address,
@@ -139,7 +158,6 @@ def test_publicSellCompleteSets(contractsFixture, universe, cash, market, tokens
         with AssertLog(contractsFixture, "MarketOIChanged", marketOIChanged):
             result = shareToken.publicSellCompleteSets(market.address, 9, longTo32Bytes(11))
 
-    tokensFail.setFail(False)
     assert universe.getOpenInterestInAttoCash() == 1 * market.getNumTicks()
 
     assert shareToken.balanceOfMarketOutcome(market.address, YES, contractsFixture.accounts[0]) == 1, "Should have 1 share of outcome yes"

@@ -1,6 +1,5 @@
 pragma solidity 0.5.10;
 
-import 'ROOT/libraries/IERC1820Registry.sol';
 import 'ROOT/libraries/Initializable.sol';
 import 'ROOT/reporting/IInitialReporter.sol';
 import 'ROOT/reporting/IMarket.sol';
@@ -122,8 +121,8 @@ contract InitialReporter is Ownable, BaseReportingParticipant, Initializable, II
     /**
      * @return Bool indicating if the report was ultimately the finalzied payout
      */
-    function designatedReporterWasCorrect() public view returns (bool) {
-        return payoutDistributionHash == market.getWinningPayoutDistributionHash();
+    function initialReporterWasCorrect() public view returns (bool) {
+        return payoutDistributionHash != bytes32(0) && payoutDistributionHash == market.getWinningPayoutDistributionHash();
     }
 
     function onTransferOwnership(address _owner, address _newOwner) internal {

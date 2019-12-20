@@ -8,18 +8,13 @@ import { Callback } from '../events';
 export class SingleThreadConnector extends BaseConnector {
   protected api: Promise<API>;
   protected events;
+  subscriptions: { [event: string]: { id: string; callback: Callback } } = {};
 
   connect = async (ethNodeUrl: string, account?: string): Promise<any> => {
-    this.api = Sync.start(ethNodeUrl, account, true, {});
-    const api = (await this.api)
-    this.events = new Subscriptions(api.augur.getAugurEventEmitter())
-    return this.api;
-  }
+    this.api = Sync.start(ethNodeUrl, account, true);
+    this.events = (await this.api).augur.getAugurEventEmitter();
 
-  async syncUserData(account: string): Promise<any> {
-    const api = (await this.api);
-    const db = await api.db;
-    return db.addTrackedUser(account, 100000, 10);
+    return this.api;
   }
 
   async disconnect(): Promise<any> {
@@ -36,7 +31,7 @@ export class SingleThreadConnector extends BaseConnector {
   async on(eventName: SubscriptionEventName | string, callback: Callback): Promise<void> {
     const wrappedCallack = super.callbackWrapper(callback);
 
-    const subscription: string = this.events.subscribe(eventName, wrappedCallack);
+    const subscription: string = (await this.events).subscribe(eventName, wrappedCallack);
     this.subscriptions[eventName] = { id: subscription, callback: wrappedCallack };
   }
 
@@ -44,7 +39,7 @@ export class SingleThreadConnector extends BaseConnector {
     const subscription = this.subscriptions[eventName];
     if (subscription) {
       delete this.subscriptions[eventName];
-      return this.events.unsubscribe(subscription.id);
+      return (await this.events).unsubscribe(subscription.id);
     }
   }
 }

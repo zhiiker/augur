@@ -20,8 +20,6 @@ import {
   CATEGORY_PARAM_NAME,
   TAGS_PARAM_NAME,
   SCALAR,
-  COPY_MARKET_ID,
-  COPY_AUTHOR,
 } from 'modules/common/constants';
 import MarketHeaderReporting from 'modules/market/containers/market-header-reporting';
 import SocialMediaButtons from 'modules/market/containers/social-media-buttons';
@@ -32,6 +30,7 @@ import Clipboard from 'clipboard';
 import { TutorialPopUp } from 'modules/market/components/common/tutorial-pop-up';
 import MarketTitle from 'modules/market/containers/market-title';
 import PreviewMarketTitle from 'modules/market/components/common/PreviewMarketTitle';
+import { MARKET_PAGE } from 'services/analytics/helpers';
 
 const OVERFLOW_DETAILS_LENGTH = 25; // in px, overflow limit to trigger MORE details
 
@@ -41,7 +40,6 @@ interface MarketHeaderProps {
   maxPrice: BigNumber;
   minPrice: BigNumber;
   market: MarketData;
-  currentTime: number;
   marketType: string;
   scalarDenomination: string;
   isLogged: boolean;
@@ -56,6 +54,7 @@ interface MarketHeaderProps {
   step: number;
   totalSteps: number;
   showTutorialDetails?: boolean;
+  marketLinkCopied: Function;
 }
 
 interface MarketHeaderState {
@@ -70,7 +69,6 @@ export default class MarketHeader extends Component<
   static defaultProps = {
     scalarDenomination: null,
     marketType: null,
-    currentTime: 0,
     isFavorite: false,
     isLogged: false,
     toggleFavorite: () => {},
@@ -141,7 +139,6 @@ export default class MarketHeader extends Component<
       maxPrice,
       scalarDenomination,
       market,
-      currentTime,
       isLogged,
       isFavorite,
       history,
@@ -153,12 +150,13 @@ export default class MarketHeader extends Component<
       step,
       totalSteps,
       text,
-      showTutorialDetails
+      showTutorialDetails,
+      marketLinkCopied
     } = this.props;
     let { details } = this.props;
-    const { headerCollapsed } = this.state;
+    const { headerCollapsed, showReadMore, detailsHeight } = this.state;
     const detailsTooLong =
-      market.details && this.state.detailsHeight > OVERFLOW_DETAILS_LENGTH;
+      market.details && detailsHeight > OVERFLOW_DETAILS_LENGTH;
 
     if (marketType === SCALAR) {
       const denomination = scalarDenomination ? ` ${scalarDenomination}` : '';
@@ -209,7 +207,7 @@ export default class MarketHeader extends Component<
                   marketAddress={market.id}
                   marketDescription={description}
                 />
-                <div id="copy_marketId" data-clipboard-text={market.id}>
+                <div id="copy_marketId" data-clipboard-text={market.id} onClick={() => marketLinkCopied(market.id, MARKET_PAGE)}>
                   {CopyAlternateIcon}
                 </div>
                 {toggleFavorite && (
@@ -227,7 +225,7 @@ export default class MarketHeader extends Component<
                 {preview ? <PreviewMarketTitle market={market} /> : <MarketTitle id={market.marketId} noLink />}
                 {details.length > 0 && (
                   <div className={Styles.Details}>
-                    <h4>Additional Details</h4>
+                    <h4>Resolution Details</h4>
                     <div>
                       <label
                         ref={detailsContainer => {
@@ -235,20 +233,19 @@ export default class MarketHeader extends Component<
                         }}
                         className={classNames(Styles.AdditionalDetails, {
                           [Styles.Tall]:
-                            detailsTooLong && this.state.showReadMore,
+                            detailsTooLong && showReadMore,
                         })}
                       >
                         <MarkdownRenderer text={details} hideLabel />
                       </label>
-
                       {detailsTooLong && (
                         <button
                           className={classNames({
-                            [Styles.Less]: this.state.showReadMore,
+                            [Styles.Less]: showReadMore,
                           })}
                           onClick={this.toggleReadMore}
                         >
-                          {!this.state.showReadMore
+                          {!showReadMore
                             ? ChevronDown({ stroke: '#FFFFFF' })
                             : ChevronUp()}
                         </button>

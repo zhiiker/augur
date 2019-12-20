@@ -8,6 +8,8 @@ import {
 import {
   MARKET_ID_PARAM_NAME,
   RETURN_PARAM_NAME,
+  OUTCOME_ID_PARAM_NAME,
+  CREATE_MARKET_FORM_PARAM_NAME,
 } from './routes/constants/param-names';
 import { AnyAction } from 'redux';
 import { EthersSigner } from 'contract-dependencies-ethers/build/ContractDependenciesEthers';
@@ -51,24 +53,22 @@ export interface Alert {
 
 export interface TimezoneDateObject {
   formattedUtc: string;
-  formattedTimezone: string;
+  formattedLocalShortDateTimeWithTimezone: string;
   timestamp: number;
 }
 
 export interface DateFormattedObject {
   value: Date;
-  formatted: string;
-  formattedShortDate: string;
+  formattedUtcShortTime: string;
   formattedShortTime: string;
-  formattedShort: string;
-  formattedLocalShort: string;
-  formattedLocalShortTime: string;
+  formattedLocalShortDate: string;
+  formattedLocalShortWithUtcOffset: string;
   formattedLocalShortDateSecondary: string;
   timestamp: number;
   utcLocalOffset: number;
   clockTimeLocal: string;
-  formattedTimezone: string;
-  formattedShortTimezone: string;
+  formattedLocalShortDateTimeWithTimezone: string;
+  formattedLocalShortDateTimeNoTimezone: string;
   formattedSimpleData: string;
   formattedUtcShortDate: string;
   clockTimeUtc: string;
@@ -166,7 +166,7 @@ export interface FormattedNumber {
 export interface FormattedNumberOptions {
   decimals?: number;
   decimalsRounded?: number;
-  denomination?: string;
+  denomination?: Function;
   roundUp?: boolean;
   roundDown?: boolean;
   positiveSign?: boolean;
@@ -264,8 +264,13 @@ export interface UIOrder {
   hash?: string;
   numTicks: number;
   minPrice: string;
+  creationTime?: DateFormattedObject;
 }
 
+export interface CreateLiquidityOrders {
+  marketId: string;
+  chunkOrders: boolean;
+}
 export interface LiquidityOrders {
   [txParamHash: string]: {
     [outcome: number]: LiquidityOrder[];
@@ -312,7 +317,7 @@ export interface NewMarketPropertyValidations {
   outcomes?: string | string[];
 }
 export interface NewMarket {
-  uniqueId: number;
+  uniqueId: string;
   isValid: boolean;
   validations:
     | NewMarketPropertiesValidations
@@ -360,7 +365,7 @@ export interface LinkContent {
 };
 
 export interface Draft {
-  uniqueId: number;
+  uniqueId: string;
   created: number;
   updated: number;
   isValid: boolean;
@@ -397,6 +402,21 @@ export interface Draft {
 
 export interface Drafts {
   [uniqueId: string]: Draft;
+}
+
+export interface Analytics {
+  [id: string]: Analytic;
+}
+
+export interface Analytic {
+  type: string;
+  eventName: string;
+  payload: AnalyticPayload;
+}
+
+export interface AnalyticPayload {
+  addedTimestamp: number;
+  userAgent: string;
 }
 
 export interface MarketsList {
@@ -477,18 +497,29 @@ export interface EthereumNodeOptions {
 }
 
 export interface EnvObject {
+  useWeb3Transport: boolean;
   'ethereum-node': EthereumNodeOptions;
   universe?: string;
-  useWeb3Transport: boolean;
+  '0x-endpoint'?: string,
+  'gnosis-relay'?: string,
+  sdkEndpoint?: string,
+  debug?: EnvDebugOptions,
+}
+
+export interface EnvDebugOptions {
+  connect: boolean;
+  broadcast: boolean;
 }
 
 export interface QueryEndpoints {
   ethereum_node_http?: string;
   ethereum_node_ws?: string;
   [MARKET_ID_PARAM_NAME]?: string;
+  [OUTCOME_ID_PARAM_NAME]?: string;
   [RETURN_PARAM_NAME]?: string;
   [CATEGORY_PARAM_NAME]?: string;
   [TAGS_PARAM_NAME]?: string;
+  [CREATE_MARKET_FORM_PARAM_NAME]?: string;
 }
 export interface Endpoints {
   ethereumNodeHTTP: string;
@@ -522,6 +553,7 @@ export interface AppStatus {
   isHelpMenuOpen: boolean;
   ethToDaiRate: BigNumber;
   gnosisEnabled: boolean;
+  zeroXEnabled: boolean;
   gnosisStatus: GnosisSafeState;
 }
 

@@ -15,13 +15,15 @@ import 'ROOT/libraries/Initializable.sol';
 import 'ROOT/IAugur.sol';
 import 'ROOT/trading/IProfitLoss.sol';
 import 'ROOT/trading/IAugurTrading.sol';
+import 'ROOT/CashSender.sol';
+import 'ROOT/libraries/TokenId.sol';
 
 
 /**
  * @title Cancel Order
  * @notice This allows you to cancel orders on the book.
  */
-contract CancelOrder is Initializable, ReentrancyGuard, ICancelOrder {
+contract CancelOrder is Initializable, ReentrancyGuard, ICancelOrder, CashSender {
 
     IAugurTrading public augurTrading;
     IOrders public orders;
@@ -33,10 +35,15 @@ contract CancelOrder is Initializable, ReentrancyGuard, ICancelOrder {
         endInitialization();
         cash = ICash(_augur.lookup("Cash"));
         shareToken = IShareToken(_augur.lookup("ShareToken"));
+        require(shareToken != IShareToken(0));
 
         augurTrading = _augurTrading;
         orders = IOrders(_augurTrading.lookup("Orders"));
+        require(orders != IOrders(0));
         profitLoss = IProfitLoss(_augurTrading.lookup("ProfitLoss"));
+
+        initializeCashSender(_augur.lookup("DaiVat"), address(cash));
+        require(profitLoss != IProfitLoss(0));
     }
 
     /**
@@ -107,16 +114,16 @@ contract CancelOrder is Initializable, ReentrancyGuard, ICancelOrder {
                     _values[_i] = _sharesEscrowed;
                     _indexOutcome++;
                 }
-                uint256[] memory _tokenIds = shareToken.getTokenIds(_market, _shortOutcomes);
+                uint256[] memory _tokenIds = TokenId.getTokenIds(_market, _shortOutcomes);
                 shareToken.unsafeBatchTransferFrom(address(augurTrading), _sender, _tokenIds, _values);
             } else {
-                shareToken.unsafeTransferFrom(address(augurTrading), _sender, shareToken.getTokenId(_market, _outcome), _sharesEscrowed);
+                shareToken.unsafeTransferFrom(address(augurTrading), _sender, TokenId.getTokenId(_market, _outcome), _sharesEscrowed);
             }
         }
 
         // Return to user moneyEscrowed that wasn't filled yet
         if (_moneyEscrowed > 0) {
-            cash.transferFrom(address(augurTrading), _sender, _moneyEscrowed);
+            cashTransferFrom(address(augurTrading), _sender, _moneyEscrowed);
         }
 
         return true;

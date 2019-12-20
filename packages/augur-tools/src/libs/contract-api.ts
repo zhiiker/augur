@@ -92,7 +92,7 @@ export class ContractAPI {
     const marketCreationFee = await this.augur.contracts.universe.getOrCacheValidityBond_();
     const repBond = await this.getRepBond();
     await this.faucet(marketCreationFee);
-    await this.repFaucet(repBond);
+    await this.repFaucet(repBond.plus(10**18));
   }
 
   async createReasonableYesNoMarket(): Promise<ContractInterfaces.Market> {
@@ -260,14 +260,14 @@ export class ContractAPI {
     await this.augur.contracts.cancelOrder.cancelOrder(orderID);
   }
 
-  async placeTrade(params: PlaceTradeDisplayParams): Promise<void> {
+  async placeNativeTrade(params: PlaceTradeDisplayParams): Promise<void> {
     const price = params.direction === 0 ? params.displayPrice : params.numTicks.minus(params.displayPrice);
     const cost = params.displayAmount.multipliedBy(price).multipliedBy(10**18);
     await this.faucet(cost);
     await this.augur.trade.placeTrade(params);
   }
 
-  async simulateTrade(params: PlaceTradeDisplayParams): Promise<SimulateTradeData> {
+  async simulateNativeTrade(params: PlaceTradeDisplayParams): Promise<SimulateTradeData> {
     return this.augur.trade.simulateTrade(params);
   }
 
@@ -276,7 +276,7 @@ export class ContractAPI {
   }
 
   async placeBasicYesNoTrade(direction: 0 | 1, market: ContractInterfaces.Market, outcome: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7, displayAmount: BigNumber, displayPrice: BigNumber, displayShares: BigNumber): Promise<void> {
-    await this.placeTrade({
+    await this.placeNativeTrade({
       direction,
       market: market.address,
       numTicks: await market.getNumTicks_(),
@@ -295,7 +295,7 @@ export class ContractAPI {
   }
 
   async simulateBasicYesNoTrade(direction: 0 | 1, market: ContractInterfaces.Market, outcome: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7, displayAmount: BigNumber, displayPrice: BigNumber, displayShares: BigNumber): Promise<SimulateTradeData> {
-    return this.simulateTrade({
+    return this.simulateNativeTrade({
       direction,
       market: market.address,
       numTicks: await market.getNumTicks_(),
@@ -536,9 +536,13 @@ export class ContractAPI {
     const reputationToken = this.augur.contracts.getReputationToken();
     if (typeof reputationToken['faucet'] === 'function') {
       await reputationToken['faucet'](attoRep);
-    }else {
+    } else {
       throw Error('Cannot faucet REP with non-test version of REP contract.');
     }
+  }
+
+  async transferCash(to: string, attoCash: BigNumber): Promise<void> {
+    await this.augur.contracts.cash.transfer(to, attoCash);
   }
 
   async approve(wei: BigNumber): Promise<void> {

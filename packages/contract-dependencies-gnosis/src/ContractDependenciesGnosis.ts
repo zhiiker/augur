@@ -24,12 +24,6 @@ const DEFAULT_GAS_PRICE = new BigNumber(10 ** 9);
 const BASE_GAS_ESTIMATE = new BigNumber(75000);
 const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 
-function* infiniteSequence(i = 0) {
-  while (true) {
-    yield i++;
-  }
-}
-
 export class ContractDependenciesGnosis extends ContractDependenciesEthers {
   useRelay = true;
   useSafe = false;
@@ -79,20 +73,38 @@ export class ContractDependenciesGnosis extends ContractDependenciesEthers {
       this.signer
     );
 
-    this._currentSignRequest = this.gnosisSafe.nonce().then(nonce => ({
-      to: '0x0',
-      safe: '0x0',
-      data: '',
-      gasToken: '0x0',
-      safeTxGas: '0x0',
-      dataGas: new BigNumber(0),
-      gasPrice: new BigNumber(0),
-      refundReceiver: '0x0',
-      nonce: nonce - 1,
-      value: new BigNumber(0),
-      operation: 0,
-      signatures: [],
-    }));
+    this._currentSignRequest = this.gnosisSafe
+      .nonce()
+      .then(nonce => ({
+        to: '0x0',
+        safe: '0x0',
+        data: '',
+        gasToken: '0x0',
+        safeTxGas: '0x0',
+        dataGas: new BigNumber(0),
+        gasPrice: new BigNumber(0),
+        refundReceiver: '0x0',
+        nonce: nonce - 1,
+        value: new BigNumber(0),
+        operation: 0,
+        signatures: [],
+      }))
+      .catch(() => {
+        return {
+          to: '0x0',
+          safe: '0x0',
+          data: '',
+          gasToken: '0x0',
+          safeTxGas: '0x0',
+          dataGas: new BigNumber(0),
+          gasPrice: new BigNumber(0),
+          refundReceiver: '0x0',
+          nonce: -1,
+          value: new BigNumber(0),
+          operation: 0,
+          signatures: [],
+        };
+      });
   }
 
   setStatus(status: GnosisSafeState): void {
@@ -177,8 +189,38 @@ export class ContractDependenciesGnosis extends ContractDependenciesEthers {
   }
 
   async estimateGas(transaction: Transaction<BigNumber>): Promise<BigNumber> {
-    if (this.useSafe && this.safeAddress) transaction.from = this.safeAddress;
-    return super.estimateGas(transaction);
+    if (this.useSafe && this.safeAddress && this.useRelay) {
+      transaction.from = this.safeAddress;
+      const response = await this.relayerEstimateGas(transaction);
+      return response;
+    } else {
+      return super.estimateGas(transaction);
+    }
+  }
+
+  async relayerEstimateGas(
+    transaction: Transaction<BigNumber>
+  ): Promise<BigNumber> {
+    transaction.from = this.safeAddress;
+    const to = transaction.to;
+    const value = transaction.value;
+
+    const relayEstimateRequest = {
+      safe: this.safeAddress,
+      to,
+      data: transaction.data,
+      value: value ? new BigNumber(value.toString()) : new BigNumber(0),
+      operation: Operation.Call,
+      gasToken: this.gasToken,
+    };
+
+    const gasEstimates: RelayTxEstimateResponse = await this.estimateTransactionViaRelay(
+      relayEstimateRequest
+    );
+    const safeTxGas = new BigNumber(gasEstimates.safeTxGas);
+    const baseGas = new BigNumber(gasEstimates.baseGas);
+
+    return safeTxGas.plus(baseGas);
   }
 
   async estimateTransactionViaRelay(

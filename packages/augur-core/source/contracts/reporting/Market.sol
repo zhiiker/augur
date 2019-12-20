@@ -8,12 +8,12 @@ import 'ROOT/reporting/IReportingParticipant.sol';
 import 'ROOT/reporting/IDisputeCrowdsourcer.sol';
 import 'ROOT/reporting/IV2ReputationToken.sol';
 import 'ROOT/external/IAffiliateValidator.sol';
+import 'ROOT/external/IDaiVat.sol';
 import 'ROOT/reporting/IAffiliates.sol';
 import 'ROOT/factories/IDisputeCrowdsourcerFactory.sol';
 import 'ROOT/ICash.sol';
 import 'ROOT/factories/InitialReporterFactory.sol';
 import 'ROOT/libraries/math/SafeMathUint256.sol';
-import 'ROOT/libraries/math/SafeMathInt256.sol';
 import 'ROOT/reporting/Reporting.sol';
 import 'ROOT/reporting/IInitialReporter.sol';
 import 'ROOT/IWarpSync.sol';
@@ -26,7 +26,6 @@ import 'ROOT/libraries/token/IERC1155.sol';
  */
 contract Market is Initializable, Ownable, IMarket {
     using SafeMathUint256 for uint256;
-    using SafeMathInt256 for int256;
 
     // Constants
     uint256 private constant MAX_APPROVAL_AMOUNT = 2 ** 256 - 1;
@@ -35,7 +34,7 @@ contract Market is Initializable, Ownable, IMarket {
     // Contract Refs
     IUniverse private universe;
     IDisputeWindow private disputeWindow;
-    ICash private cash;
+    ICash public cash;
     IAugur public augur;
     IWarpSync public warpSync;
     IShareToken public shareToken;
@@ -61,8 +60,8 @@ contract Market is Initializable, Ownable, IMarket {
     // Collections
     IReportingParticipant[] public participants;
 
-    mapping(bytes32 => address) private crowdsourcers;
-    uint256 private crowdsourcerGeneration;
+    mapping(bytes32 => address) public crowdsourcers;
+    uint256 public crowdsourcerGeneration;
 
     mapping (address => uint256) public affiliateFeesAttoCash;
 
@@ -73,9 +72,11 @@ contract Market is Initializable, Ownable, IMarket {
         _numOutcomes += 1; // The INVALID outcome is always first
         universe = _universe;
         cash = ICash(_augur.lookup("Cash"));
-        warpSync = IWarpSync(augur.lookup("WarpSync"));
+        warpSync = IWarpSync(_augur.lookup("WarpSync"));
+        require(warpSync != IWarpSync(0));
         affiliateValidator = _affiliateValidator;
-        affiliates = IAffiliates(augur.lookup("Affiliates"));
+        affiliates = IAffiliates(_augur.lookup("Affiliates"));
+        require(affiliates != IAffiliates(0));
         owner = _creator;
         repBondOwner = owner;
         cash.approve(address(_augur), MAX_APPROVAL_AMOUNT);
@@ -85,9 +86,12 @@ contract Market is Initializable, Ownable, IMarket {
         numTicks = _numTicks;
         feeDivisor = _feePerCashInAttoCash == 0 ? 0 : 1 ether / _feePerCashInAttoCash;
         affiliateFeeDivisor = _affiliateFeeDivisor;
-        InitialReporterFactory _initialReporterFactory = InitialReporterFactory(augur.lookup("InitialReporterFactory"));
-        participants.push(_initialReporterFactory.createInitialReporter(augur, _designatedReporterAddress));
-        shareToken = IShareToken(augur.lookup("ShareToken"));
+        InitialReporterFactory _initialReporterFactory = InitialReporterFactory(_augur.lookup("InitialReporterFactory"));
+        participants.push(_initialReporterFactory.createInitialReporter(_augur, _designatedReporterAddress));
+        shareToken = IShareToken(_augur.lookup("ShareToken"));
+        IDaiVat _daiVat = IDaiVat(_augur.lookup("DaiVat"));
+        _daiVat.hope(address(_augur));
+        require(shareToken != IShareToken(0));
     }
 
     function assessFees() private {
@@ -107,6 +111,7 @@ contract Market is Initializable, Ownable, IMarket {
      */
     function increaseValidityBond(uint256 _attoCash) public returns (bool) {
         require(!isFinalized());
+        // NOTE: In the event of a MKR shutdown this may become impossible as the supply of DAI decreases.
         cash.transferFrom(msg.sender, address(this), _attoCash);
         universe.deposit(address(this), _attoCash, address(this));
         validityBondAttoCash = validityBondAttoCash.add(_attoCash);
@@ -147,10 +152,10 @@ contract Market is Initializable, Ownable, IMarket {
         repBond = 0;
         // If the designated reporter showed up and is not also the rep bond owner return the rep bond to the bond owner. Otherwise it will be used as stake in the first report.
         if (_reporter == _initialReporter.getDesignatedReporter() && _reporter != repBondOwner) {
-            require(_reputationToken.noHooksTransfer(repBondOwner, _initialReportStake));
+            require(_reputationToken.transfer(repBondOwner, _initialReportStake));
             _reputationToken.trustedMarketTransfer(_reporter, address(_initialReporter), _initialReportStake);
         } else {
-            require(_reputationToken.noHooksTransfer(address(_initialReporter), _initialReportStake));
+            require(_reputationToken.transfer(address(_initialReporter), _initialReportStake));
         }
         return _initialReportStake;
     }
@@ -314,7 +319,7 @@ contract Market is Initializable, Ownable, IMarket {
             if (_reportingParticipant.getPayoutDistributionHash() == winningPayoutDistributionHash) {
                 // The last participant's owed REP will not actually be 40% ROI in the event it was created through pre-emptive contributions. We just give them all the remaining non burn REP
                 uint256 amountToTransfer = j == participants.length - 1 ? _reputationToken.balanceOf(address(this)) : _reportingParticipant.getSize().mul(2) / 5;
-                require(_reputationToken.noHooksTransfer(address(_reportingParticipant), amountToTransfer));
+                require(_reputationToken.transfer(address(_reportingParticipant), amountToTransfer));
             }
         }
     }
@@ -482,7 +487,7 @@ contract Market is Initializable, Ownable, IMarket {
         if (repBond > 0) {
             IV2ReputationToken _reputationToken = getReputationToken();
             uint256 _repBond = repBond;
-            require(_reputationToken.noHooksTransfer(repBondOwner, _repBond));
+            require(_reputationToken.transfer(repBondOwner, _repBond));
             repBond = 0;
         } else {
             _initialParticipant.returnRepFromDisavow();
@@ -571,8 +576,8 @@ contract Market is Initializable, Ownable, IMarket {
     /**
      * @return Bool indicating if the initial reporter was correct
      */
-    function designatedReporterWasCorrect() public view returns (bool) {
-        return getInitialReporter().designatedReporterWasCorrect();
+    function initialReporterWasCorrect() public view returns (bool) {
+        return getInitialReporter().initialReporterWasCorrect();
     }
 
     /**
@@ -750,6 +755,7 @@ contract Market is Initializable, Ownable, IMarket {
      * @return Bool True
      */
     function transferRepBondOwnership(address _newOwner) public returns (bool) {
+        require(_newOwner != address(0));
         require(msg.sender == repBondOwner);
         repBondOwner = _newOwner;
         return true;
