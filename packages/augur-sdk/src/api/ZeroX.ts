@@ -3,7 +3,7 @@ import {
   OrderInfo,
   WSClient,
 } from '@0x/mesh-rpc-client';
-import { ValidationResults } from '@0x/mesh-browser';
+import { ValidationResults } from '@augurproject/0x-mesh';
 import { SignatureType, SignedOrder } from '@0x/types';
 import { Event } from '@augurproject/core/build/libraries/ContractInterfaces';
 import { BigNumber } from 'bignumber.js';
