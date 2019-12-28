@@ -30,6 +30,7 @@ import { formatBytes32String } from 'ethers/utils';
 import { Account } from '../constants';
 import { makeGnosisDependencies, makeSigner } from './blockchain';
 import { sleep } from '@augurproject/core/build/libraries/HelperFunctions';
+import { Event } from "@augurproject/core/build/libraries/GenericContractInterfaces";
 
 const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 const ETERNAL_APPROVAL_VALUE = new BigNumber('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'); // 2^256 - 1
@@ -264,8 +265,27 @@ export class ContractAPI {
     await this.augur.contracts.trade.publicFillBestOrder(type, marketAddress, outcome, numShares, price, tradeGroupID, new BigNumber(3), formatBytes32String(""), NULL_ADDRESS);
   }
 
-  async cancelOrder(orderID: string): Promise<void> {
-    await this.augur.contracts.cancelOrder.cancelOrder(orderID);
+  async cancelOrder(orderID: string, zeroX = true): Promise<void> {
+    if (zeroX) {
+      this.augur.contracts.zeroXExchange.cancelOrder({
+        makerAddress: '',
+        takerAddress: '',
+        feeRecipientAddress: '',
+        senderAddress: '',
+        makerAssetAmount: new BigNumber(0),
+        takerAssetAmount: new BigNumber(0),
+        makerFee: new BigNumber(0),
+        takerFee: new BigNumber(0),
+        expirationTimeSeconds: new BigNumber(0),
+        salt: new BigNumber(0),
+        makerAssetData: '',
+        takerAssetData: '',
+        makerFeeAssetData: '',
+        takerFeeAssetData: '',
+      })
+    } else {
+      await this.augur.contracts.cancelOrder.cancelOrder(orderID);
+    }
   }
 
   async placeNativeTrade(params: PlaceTradeDisplayParams): Promise<void> {

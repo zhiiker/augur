@@ -224,6 +224,57 @@ describe('Augur API :: ZeroX :: ', () => {
       await expect(simulationData.sharesFilled).toEqual(fillAmount);
       await expect(simulationData.tokensDepleted).toEqual(fillAmount.multipliedBy(fillPrice));
     });
+
+    test('State API :: ZeroX :: cancel order', async () => {
+      // Create a market
+      const market = await john.createReasonableMarket([
+        stringTo32ByteHex('A'),
+        stringTo32ByteHex('B'),
+      ]);
+
+      await (await johnDB).sync(john.augur, mock.constants.chunkSize, 0);
+
+      // Place an order
+      const kycToken = DEADBEEF_ADDRESS;
+      const expirationTime = new BigNumber(new Date().valueOf()).plus(10000);
+      await john.placeZeroXOrder({
+        direction: 0,
+        market: market.address,
+        numTicks: await market.getNumTicks_(),
+        numOutcomes: 3,
+        outcome: 0,
+        tradeGroupId: '42',
+        fingerprint: formatBytes32String('11'),
+        kycToken,
+        doNotCreateOrders: false,
+        displayMinPrice: new BigNumber(0),
+        displayMaxPrice: new BigNumber(1),
+        displayAmount: new BigNumber(10),
+        displayPrice: new BigNumber(.22),
+        displayShares: new BigNumber(100000),
+        expirationTime,
+      });
+
+      // Terrible, but not clear how else to wait on the mesh event propagating to the callback and it finishing updating the DB...
+      await sleep(300);
+
+      // Get orders for the market
+      let orders: ZeroXOrders = await johnAPI.route('getZeroXOrders', {
+        marketId: market.address,
+      });
+      const order = _.values(orders[market.address][0]['0'])[0];
+      await expect(order).not.toBeUndefined();
+
+      await john.cancelOrder(order.orderId);
+
+      await sleep(300);
+
+      // Get orders for the market
+      orders = await johnAPI.route('getZeroXOrders', {
+        marketId: market.address,
+      });
+      expect(Object.keys(orders[market.address]).length).toEqual(0);
+    });
   });
 
   describe('without gnosis', () => {
