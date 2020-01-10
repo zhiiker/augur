@@ -10,8 +10,10 @@ import {
   isTransactionConfirmed,
   createLiquidityOrders,
   approveToTrade,
+  placeTrade,
 } from 'modules/contracts/actions/contractCalls';
 import { Getters } from '@augurproject/sdk';
+
 export const UPDATE_LIQUIDITY_ORDER = 'UPDATE_LIQUIDITY_ORDER';
 export const ADD_MARKET_LIQUIDITY_ORDERS = 'ADD_MARKET_LIQUIDITY_ORDERS';
 export const REMOVE_LIQUIDITY_ORDER = 'REMOVE_LIQUIDITY_ORDER';
@@ -161,14 +163,23 @@ export const sendLiquidityOrder = (options: any) => async (
   const { orderEstimate } = order;
   const sendOrder = async () => {
    try {
-      createLiquidityOrder({
-        ...order,
+      await placeTrade(
         orderType,
+        marketId,
+        // todo use actual outcomes number
+        3,
+        parseInt(order.outcomeId, 10),
+        undefined,
+        undefined,
+        false,
+        numTicks,
         minPrice,
         maxPrice,
-        numTicks,
-        marketId,
-      });
+        order.quantity,
+        order.price,
+        "0",
+        // expiration time
+      );
     } catch (e) {
       console.error('could not create order', e);
     }
@@ -199,23 +210,31 @@ export const startOrderSending = (options: CreateLiquidityOrders) => async (
     orders = [...orders, ...liquidity[outcomeId]];
   });
 
-  if (!chunkOrders) {
-    try {
-      createLiquidityOrders(market, orders);
-    } catch (e) {
-      console.error(e);
-    }
-  } else {
-    // MAX_BULK_ORDER_COUNT number of orders in each creation bulk group
-    let i = 0;
-    const groups = [];
-    for (i; i < orders.length; i += MAX_BULK_ORDER_COUNT) {
-      groups.push(orders.slice(i, i + MAX_BULK_ORDER_COUNT));
-    }
-    try {
-      groups.map(group => createLiquidityOrders(market, group));
-    } catch (e) {
-      console.error(e);
+  // MAX_BULK_ORDER_COUNT number of orders in each creation bulk group
+  let i = 0;
+  const groups = [];
+  for (i; i < orders.length; i += MAX_BULK_ORDER_COUNT) {
+   try {
+      placeTrade(
+        orders[i].orderType,
+        marketId,
+        // todo make actual outcomes
+        3,
+        parseInt(orders[i].outcomeId, 10),
+        undefined,
+        undefined,
+        false,
+        market.numTicks,
+        market.minPrice,
+        market.maxPrice,
+        orders[i].quantity,
+        orders[i].price,
+        "0",
+        // expiration time
+      );
+      } catch (e) {
+          console.error(e);
+        } 
     }
   }
 };

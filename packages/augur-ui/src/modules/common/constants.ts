@@ -684,7 +684,7 @@ export const MAX_BULK_CLAIM_MARKETS_PROCEEDS_COUNT = Math.floor(
     .div(CLAIM_MARKETS_PROCEEDS_GAS_ESTIMATE)
     .toNumber()
 );
-export const MAX_BULK_ORDER_COUNT = 5;
+export const MAX_BULK_ORDER_COUNT = 1;
 export const ETHER = createBigNumber(10).pow(18);
 
 // # Positions
