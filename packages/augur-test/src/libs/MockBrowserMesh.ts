@@ -1,5 +1,11 @@
-import { OrderInfo, WSClient, OrderEvent, AcceptedOrderInfo, SignedOrder } from '@0x/mesh-rpc-client';
 import { ValidationResults } from '@0x/mesh-browser';
+import {
+  AcceptedOrderInfo,
+  OrderEvent,
+  OrderInfo,
+  SignedOrder,
+  WSClient,
+} from '@0x/mesh-rpc-client';
 import { orderHashUtils } from '@0x/order-utils';
 
 export class MockBrowserMesh {
